@@ -245,6 +245,7 @@ window.plugin.guardians.updateVisited = function(visited, guid) {
 }
 
 window.plugin.guardians.updateCaptured = function(owner, guid) {
+	var madeChange = false;
 	if(guid == undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid];
@@ -253,14 +254,17 @@ window.plugin.guardians.updateCaptured = function(owner, guid) {
 			date: 0,
 			owner: owner 
 		};
+		madeChange = true;
 	} else if (guardianInfo.owner != owner){
 		guardianInfo.owner = owner;
 		guardianInfo.date = guardianInfo.date + 1;
+		madeChange = true;
 	}
-
-	plugin.guardians.updateCheckedAndHighlight(guid);
-	console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
-	plugin.guardians.sync(guid);
+	if (madeChange){
+		plugin.guardians.updateCheckedAndHighlight(guid);
+		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+		plugin.guardians.sync(guid);
+	}
 }
 
 // stores the gived GUID for sync
