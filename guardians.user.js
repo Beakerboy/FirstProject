@@ -88,6 +88,7 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
 			    date = msg[1];
 			if(guid) {
+				console.log("running capture");
 				 plugin.guardians.setPortalCaptured(date, guid);
 			}
 		} else if(plext.plextType == 'SYSTEM_NARROWCAST'
@@ -138,13 +139,14 @@ window.plugin.guardians.setPortalNeutralized = function(date, guid) {
 	}
 	if (madeChange){
 		plugin.guardians.updateCheckedAndHighlight(guid);
-		console.log('Capturing ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+		console.log('Neutralized ' + guid + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
 }
 
 window.plugin.guardians.setPortalCaptured = function(date, guid) {
 	var madeChange = false,
+	    owner = window.PLAYER.nickname,
 	    guardianInfo = plugin.guardians.guardians[guid];
 	if (guardianInfo){
 		if (date > guardianInfo.date) {
@@ -154,14 +156,14 @@ window.plugin.guardians.setPortalCaptured = function(date, guid) {
 		}
 	} else {
 		plugin.guardians.guardians[guid] = {
-			owner: window.PLAYER.nickname,
-			date:date 
+			owner: owner,
+			date: date 
 		};
 		madeChange = true;
 	}
 	if (madeChange){
+		console.log('Capturing ' + guid +'. Adding ' + owner + ' At time ' + date);
 		plugin.guardians.updateCheckedAndHighlight(guid);
-		console.log('Capturing ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
 }
