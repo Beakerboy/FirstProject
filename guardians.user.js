@@ -118,8 +118,11 @@ window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 		var guardianInfo = plugin.guardians.guardians[guid],
 			visited = (guardianInfo && guardianInfo.visited) || false,
 			captured = (guardianInfo && guardianInfo.captured) || false;
-		$('#visited').prop('checked', visited);
-		$('#captured').prop('checked', captured);
+		if (guardianInfo) {
+		var date = new Date(guardianInfo.date);
+		$('#capture-date').html(date.toDateString());
+
+		}
 	}
 
 	if (window.plugin.guardians.isHighlightActive) {
@@ -338,8 +341,7 @@ window.plugin.guardians.setupPortalsList = function() {
 		var info = plugin.guardians.guardians[data.guid];
 		if(!info) info = { visited: false, captured: false };
 
-		$('[data-list-guardians="'+data.guid+'"].visited').prop('checked', !!info.visited);
-		$('[data-list-guardians="'+data.guid+'"].captured').prop('checked', !!info.captured);
+		$('[data-list-guardians="'+data.guid+'"].capture-date').html('is this it');
 	});
 
 	window.addHook('pluginGuardiansRefreshAll', function() {
@@ -347,11 +349,10 @@ window.plugin.guardians.setupPortalsList = function() {
 			var guid = element.getAttribute("data-list-guardians");
 
 			var info = plugin.guardians.guardians[guid];
-			if(!info) info = { visited: false, captured: false };
+			if(!info) info = { date: 0 };
 
 			var e = $(element);
-			if(e.hasClass('visited')) e.prop('checked', !!info.visited);
-			if(e.hasClass('captured')) e.prop('checked', !!info.captured);
+			if(e.hasClass('capture-date')) e.innerHTML('maybe this');
 		});
 	});
 
@@ -371,31 +372,15 @@ window.plugin.guardians.setupPortalsList = function() {
 		},
 		format: function(cell, portal, guid) {
 			var info = plugin.guardians.guardians[guid];
-			if(!info) info = { visited: false, captured: false };
+			if(!info) info = { date: 0 };
 
 			$(cell).addClass("portal-list-guardians");
 
 			// for some reason, jQuery removes event listeners when the list is sorted. Therefore we use DOM's addEventListener
-			$('<input>')
+			$('<span>')
 				.prop({
-					type: "checkbox",
-					className: "visited",
-					title: "Portal visited?",
-					checked: !!info.visited,
-				})
-				.attr("data-list-guardians", guid)
-				.appendTo(cell)
-				[0].addEventListener("change", function(ev) {
-					window.plugin.guardians.updateVisited(this.checked, guid);
-					ev.preventDefault();
-					return false;
-				}, false);
-			$('<input>')
-				.prop({
-					type: "checkbox",
-					className: "captured",
-					title: "Portal captured?",
-					checked: !!info.captured,
+					className: "capture-date",
+					title: "Capture Date",
 				})
 				.attr("data-list-guardians", guid)
 				.appendTo(cell)
