@@ -63,18 +63,7 @@ window.plugin.guardians.onPortalDetailsUpdated = function() {
 		details = portalDetail.get(guid),
 		nickname = window.PLAYER.nickname;
 	if(details) {
-		if(details.owner == nickname) {
-			plugin.guardians.updateCaptured(true);
-			// no further logic required
-		} else {
-			function installedByPlayer(entity) {
-				return entity && entity.owner == nickname;
-			}
-			
-			if(details.resonators.some(installedByPlayer) || details.mods.some(installedByPlayer)) {
-				plugin.guardians.updateVisited(true);
-			}
-		}
+		plugin.guardians.updateCaptured(details.owner);
 	}
 
 	$('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
@@ -255,25 +244,22 @@ window.plugin.guardians.updateVisited = function(visited, guid) {
 	plugin.guardians.sync(guid);
 }
 
-window.plugin.guardians.updateCaptured = function(captured, guid) {
+window.plugin.guardians.updateCaptured = function(owner, guid) {
 	if(guid == undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid];
 	if (!guardianInfo) {
 		plugin.guardians.guardians[guid] = guardianInfo = {
-			visited: false,
-			captured: false
+			date: 0,
+			owner: owner 
 		};
-	}
-
-	if (captured) { // captured --> visited
-		guardianInfo.captured = true;
-		guardianInfo.visited = true;
-	} else {
-		guardianInfo.captured = false;
+	} else if (guardianInfo.owner != owner){
+		guardianInfo.owner = owner;
+		guardianInfo.date = guardianInfo.date + 1;
 	}
 
 	plugin.guardians.updateCheckedAndHighlight(guid);
+	console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 	plugin.guardians.sync(guid);
 }
 
