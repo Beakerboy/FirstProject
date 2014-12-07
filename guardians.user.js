@@ -309,22 +309,11 @@ window.plugin.guardians.highlighter = {
 		var style = {};
 
 		if (guardianInfo) {
-			if (guardianInfo.captured) {
-				// captured (and, implied, visited too) - no highlights
-
-			} else if (guardianInfo.visited) {
-				style.fillColor = 'yellow';
+			if (guardianInfo.owner == window.PLAYER.nickname) {
+				style.fillColor = 'black';
 				style.fillOpacity = 0.6;
-			} else {
-				// we have an 'guardianInfo' entry for the portal, but it's not set visited or captured?
-				// could be used to flag a portal you don't plan to visit, so use a less opaque red
-				style.fillColor = 'red';
-				style.fillOpacity = 0.5;
+				// captured (and, implied, visited too) - no highlights
 			}
-		} else {
-			// no visit data at all
-			style.fillColor = 'red';
-			style.fillOpacity = 0.7;
 		}
 
 		data.portal.setStyle(style);
@@ -345,8 +334,7 @@ window.plugin.guardians.setupCSS = function() {
 
 window.plugin.guardians.setupContent = function() {
 	plugin.guardians.contentHTML = '<div id="guardians-container">'
-		+ '<label><input type="checkbox" id="visited" onclick="window.plugin.guardians.updateVisited($(this).prop(\'checked\'))"> Visited</label>'
-		+ '<label><input type="checkbox" id="captured" onclick="window.plugin.guardians.updateCaptured($(this).prop(\'checked\'))"> Captured</label>'
+		+ '<label><span id="capture-date">Empty</span></label>'
 		+ '</div>';
 	plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
 }
