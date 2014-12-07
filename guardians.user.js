@@ -76,23 +76,6 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 		var plext = msg[2].plext,
 			markup = plext.markup;
 
-		// search for "x deployed an Ly Resonator on z"
-		if(plext.plextType == 'SYSTEM_BROADCAST'
-		&& markup.length==5
-		&& markup[0][0] == 'PLAYER'
-		&& markup[0][1].plain == nick
-		&& markup[1][0] == 'TEXT'
-		&& markup[1][1].plain == ' deployed an '
-		&& markup[2][0] == 'TEXT'
-		&& markup[3][0] == 'TEXT'
-		&& markup[3][1].plain == ' Resonator on '
-		&& markup[4][0] == 'PORTAL') {
-			var portal = markup[4][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalVisited(guid);
-		}
-
-		// search for "x captured y"
 		if(plext.plextType == 'SYSTEM_BROADCAST'
 		&& markup.length==3
 		&& markup[0][0] == 'PLAYER'
@@ -100,70 +83,19 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 		&& markup[1][0] == 'TEXT'
 		&& markup[1][1].plain == ' captured '
 		&& markup[2][0] == 'PORTAL') {
+		// search for "x captured y"
 			var portal = markup[2][1];
 			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
 			if(guid) plugin.guardians.setPortalCaptured(guid);
-		}
-
-		// search for "x linked y to z"
-		if(plext.plextType == 'SYSTEM_BROADCAST'
-		&& markup.length==5
-		&& markup[0][0] == 'PLAYER'
-		&& markup[0][1].plain == nick
-		&& markup[1][0] == 'TEXT'
-		&& markup[1][1].plain == ' linked '
-		&& markup[2][0] == 'PORTAL'
-		&& markup[3][0] == 'TEXT'
-		&& markup[3][1].plain == ' to '
-		&& markup[4][0] == 'PORTAL') {
-			var portal = markup[2][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalVisited(guid);
-		}
-
-		// search for "Your Lx Resonator on y was destroyed by z"
-		if(plext.plextType == 'SYSTEM_NARROWCAST'
-		&& markup.length==6
-		&& markup[0][0] == 'TEXT'
-		&& markup[0][1].plain == 'Your '
-		&& markup[1][0] == 'TEXT'
-		&& markup[2][0] == 'TEXT'
-		&& markup[2][1].plain == ' Resonator on '
-		&& markup[3][0] == 'PORTAL'
-		&& markup[4][0] == 'TEXT'
-		&& markup[4][1].plain == ' was destroyed by '
-		&& markup[5][0] == 'PLAYER') {
-			var portal = markup[3][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalVisited(guid);
-		}
-
-		// search for "Your Lx Resonator on y has decayed"
-		if(plext.plextType == 'SYSTEM_NARROWCAST'
-		&& markup.length==5
-		&& markup[0][0] == 'TEXT'
-		&& markup[0][1].plain == 'Your '
-		&& markup[1][0] == 'TEXT'
-		&& markup[2][0] == 'TEXT'
-		&& markup[2][1].plain == ' Resonator on '
-		&& markup[3][0] == 'PORTAL'
-		&& markup[4][0] == 'TEXT'
-		&& markup[4][1].plain == ' has decayed') {
-			var portal = markup[3][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalVisited(guid);
-		}
-
-		// search for "Your Portal x neutralized by y"
-		// search for "Your Portal x is under attack by y"
-		if(plext.plextType == 'SYSTEM_NARROWCAST'
+		} else if(plext.plextType == 'SYSTEM_NARROWCAST'
 		&& markup.length==4
 		&& markup[0][0] == 'TEXT'
 		&& markup[0][1].plain == 'Your Portal '
 		&& markup[1][0] == 'PORTAL'
 		&& markup[2][0] == 'TEXT'
-		&& (markup[2][1].plain == ' neutralized by ' || markup[2][1].plain == ' is under attack by ')
+		&& (markup[2][1].plain == ' neutralized by ')
 		&& markup[3][0] == 'PLAYER') {
+		// search for "Your Portal x neutralized by y"
 			var portal = markup[1][1];
 			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
 			if(guid) plugin.guardians.setPortalVisited(guid);
