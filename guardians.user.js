@@ -85,8 +85,11 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 		&& markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
 			var portal = markup[2][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalCaptured(guid);
+			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+			    date = msg[1];
+			if(guid) {
+				 plugin.guardians.setPortalCaptured(date, guid);
+			}
 		} else if(plext.plextType == 'SYSTEM_NARROWCAST'
 		&& markup.length==4
 		&& markup[0][0] == 'TEXT'
@@ -97,8 +100,11 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 		&& markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
 			var portal = markup[1][1];
-			var guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6);
-			if(guid) plugin.guardians.setPortalVisited(guid);
+			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+			    date = msg[1];
+			if(guid) {
+				plugin.guardians.setPortalNeutralized(date, guid);
+			}
 		}
 	});
 }
@@ -123,57 +129,41 @@ window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 }
 
 
-window.plugin.guardians.setPortalVisited = function(guid) {
-	var guardianInfo = plugin.guardians.guardians[guid];
-	if (guardianInfo) {
-		guardianInfo.visited = true;
-	} else {
-		plugin.guardians.guardians[guid] = {
-			visited: true,
-			captured: false
-		};
+window.plugin.guardians.setPortalNeutralized = function(date, guid) {
+	var madeChange = false,
+	    guardianInfo = plugin.guardians.guardians[guid];
+	if (guardianInfo && guardianInfo.owner == window.PLAYER.nickname && date > guardianInfo.date) {
+		guardianInfo.owner = '';
+		guardianInfo.date = date;
 	}
-
-	plugin.guardians.updateCheckedAndHighlight(guid);
-	plugin.guardians.sync(guid);
+	if (madeChange){
+		plugin.guardians.updateCheckedAndHighlight(guid);
+		console.log('Capturing ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+		plugin.guardians.sync(guid);
+	}
 }
 
-window.plugin.guardians.setPortalCaptured = function(guid) {
-	var guardianInfo = plugin.guardians.guardians[guid];
-	if (guardianInfo) {
-		guardianInfo.visited = true;
-		guardianInfo.captured = true;
+window.plugin.guardians.setPortalCaptured = function(date, guid) {
+	var madeChange = false,
+	    guardianInfo = plugin.guardians.guardians[guid];
+	if (guardianInfo){
+		if (date > guardianInfo.date) {
+			guardianInfo.owner = window.PLAYER.nickname;
+			guardianInfo.date = date;
+			madeChange = true;
+		}
 	} else {
 		plugin.guardians.guardians[guid] = {
-			visited: true,
-			captured: true
+			owner: window.PLAYER.nickname,
+			date:date 
 		};
+		madeChange = true;
 	}
-
-	plugin.guardians.updateCheckedAndHighlight(guid);
-	plugin.guardians.sync(guid);
-}
-
-window.plugin.guardians.updateVisited = function(visited, guid) {
-	if(guid == undefined) guid = window.selectedPortal;
-
-	var guardianInfo = plugin.guardians.guardians[guid];
-	if (!guardianInfo) {
-		plugin.guardians.guardians[guid] = guardianInfo = {
-			visited: false,
-			captured: false
-		};
+	if (madeChange){
+		plugin.guardians.updateCheckedAndHighlight(guid);
+		console.log('Capturing ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+		plugin.guardians.sync(guid);
 	}
-
-	if (visited) {
-		guardianInfo.visited = true;
-	} else { // not visited --> not captured
-		guardianInfo.visited = false;
-		guardianInfo.captured = false;
-	}
-
-	plugin.guardians.updateCheckedAndHighlight(guid);
-	plugin.guardians.sync(guid);
 }
 
 window.plugin.guardians.updateCaptured = function(owner, guid) {
