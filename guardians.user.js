@@ -70,7 +70,7 @@ function wrapper(plugin_info) {
 
         $('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
         plugin.guardians.updateCheckedAndHighlight(guid);
-    }
+    };
 
     window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	    var nick = window.PLAYER.nickname;
@@ -110,7 +110,7 @@ function wrapper(plugin_info) {
                 }
 		    }
 	    });
-    }
+    };
 
     window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 	    runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
@@ -126,7 +126,7 @@ function wrapper(plugin_info) {
 			    window.setMarkerStyle (portals[guid], guid == selectedPortal);
 		    }
 	    }
-    }
+    };
 
 
 window.plugin.guardians.setPortalNeutralized = function(date, guid) {
@@ -141,7 +141,7 @@ window.plugin.guardians.setPortalNeutralized = function(date, guid) {
 		console.log('Neutralized ' + guid + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
-}
+};
 
 window.plugin.guardians.setPortalCaptured = function(date, guid) {
 	var madeChange = false,
@@ -165,7 +165,7 @@ window.plugin.guardians.setPortalCaptured = function(date, guid) {
 		plugin.guardians.updateCheckedAndHighlight(guid);
 		plugin.guardians.sync(guid);
 	}
-}
+};
 
 window.plugin.guardians.updateCaptured = function(owner, guid) {
 	var madeChange = false;
@@ -188,7 +188,7 @@ window.plugin.guardians.updateCaptured = function(owner, guid) {
 		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
-}
+};
 
 // stores the gived GUID for sync
     plugin.guardians.sync = function(guid) {
@@ -196,7 +196,7 @@ window.plugin.guardians.updateCaptured = function(owner, guid) {
 	    plugin.guardians.storeLocal('guardians');
 	    plugin.guardians.storeLocal('updateQueue');
 	    plugin.guardians.syncQueue();
-    }
+    };
 
 // sync the queue, but delay the actual sync to group a few updates in a single request
 window.plugin.guardians.syncQueue = function() {
@@ -214,7 +214,7 @@ window.plugin.guardians.syncQueue = function() {
 
 		plugin.sync.updateMap('guardians', 'guardians', Object.keys(plugin.guardians.updatingQueue));
 	}, plugin.guardians.SYNC_DELAY);
-}
+};
 
 //Call after IITC and all plugin loaded
     window.plugin.guardians.registerFieldForSyncing = function() {
@@ -222,7 +222,7 @@ window.plugin.guardians.syncQueue = function() {
 	        return;
 	    }
 	    window.plugin.sync.registerMapForSync('guardians', 'guardians', window.plugin.guardians.syncCallback, window.plugin.guardians.syncInitialed);
-    }
+    };
 
 //Call after local or remote change uploaded
 window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUpdated) {
@@ -257,7 +257,7 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 			window.runHooks('pluginGuardiansUpdateGuardians', {guid: e.property});
 		}
 	}
-}
+};
 
 //syncing of the field is initialed, upload all queued update
     window.plugin.guardians.syncInitialed = function(pluginName, fieldName) {
@@ -267,7 +267,7 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 			    plugin.guardians.syncQueue();
 		    }
 	    }
-    }
+    };
 
     window.plugin.guardians.storeLocal = function(name) {
 	    var key = window.plugin.guardians.FIELDS[name];
@@ -282,7 +282,7 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 	    } else {
 		    localStorage.removeItem(key);
 	    }
-    }
+    };
 
     window.plugin.guardians.loadLocal = function(name) {
 	    var key = window.plugin.guardians.FIELDS[name];
@@ -292,7 +292,7 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 	    if(localStorage[key] !== undefined) {
 		    plugin.guardians[name] = JSON.parse(localStorage[key]);
 	    }
-    }
+    };
 
 /***************************************************************************************************************************************************************/
 /** HIGHLIGHTER ************************************************************************************************************************************************/
@@ -323,7 +323,7 @@ window.plugin.guardians.highlighter = {
 	setSelected: function(active) {
 		window.plugin.guardians.isHighlightActive = active;
 	}
-}
+};
 
 
     window.plugin.guardians.setupCSS = function() {
@@ -331,14 +331,14 @@ window.plugin.guardians.highlighter = {
 	    .prop("type", "text/css")
 	    .html("#guardians-container {\n  display: block;\n  text-align: center;\n  margin: 6px 3px 1px 3px;\n  padding: 0 4px;\n}\n#guardians-container label {\n  margin: 0 0.5em;\n}\n#guardians-container input {\n  vertical-align: middle;\n}\n\n.portal-list-guardians input[type=\'checkbox\'] {\n  padding: 0;\n  height: auto;\n  margin-top: -5px;\n  margin-bottom: -5px;\n}\n")
 	    .appendTo("head");
-    }
+    };
 
     window.plugin.guardians.setupContent = function() {
 	    plugin.guardians.contentHTML = '<div id="guardians-container">'
 		    + '<label><span id="capture-date">Empty</span></label>'
 		    + '</div>';
 	    plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
-    }
+    };
 
     window.plugin.guardians.setupPortalsList = function() {
         if(!window.plugin.portalslist){
@@ -363,14 +363,14 @@ window.plugin.guardians.highlighter = {
 			    if(e.hasClass('capture-date')) e.innerHTML('maybe this');
 		    });
 	    });
-    }
+    };
 	function guardianValue(guid) {
 		var info = plugin.guardians.guardians[guid];
 		if(!info) return 0;
 
 		if(info.visited && info.captured) return 2;
 		if(info.visited) return 1;
-	}
+	};
 
 	window.plugin.portalslist.fields.push({
 		title: "Visit",
