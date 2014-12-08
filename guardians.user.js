@@ -169,7 +169,7 @@ window.plugin.guardians.setPortalCaptured = function(date, guid) {
 
 window.plugin.guardians.updateCaptured = function(owner, guid) {
 	var madeChange = false;
-	if(guid == undefined) guid = window.selectedPortal;
+	if(guid === undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid];
 	if (!guardianInfo) {
@@ -424,7 +424,7 @@ window.plugin.guardians.highlighter = {
                 }
             }, 500);
         }
-    }
+    };
 
 //PLUGIN END //////////////////////////////////////////////////////////
 
