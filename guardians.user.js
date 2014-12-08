@@ -17,7 +17,9 @@
 
 function wrapper(plugin_info) {
 // ensure plugin framework is there, even if iitc is not yet loaded
-    if(typeof window.plugin !== 'function') window.plugin = function() {};
+    if (typeof window.plugin !== 'function') {
+    	window.plugin = function () {};
+    }
 
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
@@ -30,7 +32,7 @@ function wrapper(plugin_info) {
 //PLUGIN START ////////////////////////////////////////////////////////
 
 //use own namespace for plugin
-    window.plugin.guardians = function() {};
+    window.plugin.guardians = function () {};
 
 //delay in ms
     window.plugin.guardians.SYNC_DELAY = 5000;
@@ -38,8 +40,8 @@ function wrapper(plugin_info) {
 // maps the JS property names to localStorage keys
     window.plugin.guardians.FIELDS = {
         'guardians': 'plugin-guardians-data',
-	    'updateQueue': 'plugin-guardians-data-queue',
-	    'updatingQueue': 'plugin-guardians-data-updating-queue',
+        'updateQueue': 'plugin-guardians-data-queue',
+        'updatingQueue': 'plugin-guardians-data-updating-queue',
     };
 
     window.plugin.guardians.guardians = {};
