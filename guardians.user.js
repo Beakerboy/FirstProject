@@ -309,6 +309,11 @@ window.plugin.guardians.highlighter = {
 				style.fillOpacity = 0.6;
 				// captured (and, implied, visited too) - no highlights
 			}
+			if (guardianInfo.owner == window.PLAYER.nickname && guardianInfo.date < Date.now() - 2592000000) {
+				style.fillColor = 'red';
+				style.fillOpacity = 0.6;
+				// captured (and, implied, visited too) - no highlights
+			}
 		}
 
 		data.portal.setStyle(style);
