@@ -17,7 +17,7 @@
 
 function wrapper(plugin_info) {
 // ensure plugin framework is there, even if iitc is not yet loaded
-if(typeof window.plugin !== 'function') window.plugin = function() {};
+    if(typeof window.plugin !== 'function') window.plugin = function() {};
 
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
@@ -30,75 +30,75 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN START ////////////////////////////////////////////////////////
 
 //use own namespace for plugin
-window.plugin.guardians = function() {};
+    window.plugin.guardians = function() {};
 
 //delay in ms
 window.plugin.guardians.SYNC_DELAY = 5000;
 
 // maps the JS property names to localStorage keys
-window.plugin.guardians.FIELDS = {
-    'guardians': 'plugin-guardians-data',
-	'updateQueue': 'plugin-guardians-data-queue',
-	'updatingQueue': 'plugin-guardians-data-updating-queue',
-};
+    window.plugin.guardians.FIELDS = {
+        'guardians': 'plugin-guardians-data',
+	    'updateQueue': 'plugin-guardians-data-queue',
+	    'updatingQueue': 'plugin-guardians-data-updating-queue',
+    };
 
-window.plugin.guardians.guardians = {};
-window.plugin.guardians.updateQueue = {};
-window.plugin.guardians.updatingQueue = {};
+    window.plugin.guardians.guardians = {};
+    window.plugin.guardians.updateQueue = {};
+    window.plugin.guardians.updatingQueue = {};
 
-window.plugin.guardians.enableSync = false;
+    window.plugin.guardians.enableSync = false;
 
-window.plugin.guardians.disabledMessage = null;
-window.plugin.guardians.contentHTML = null;
+    window.plugin.guardians.disabledMessage = null;
+    window.plugin.guardians.contentHTML = null;
 
-window.plugin.guardians.isHighlightActive = false;
+    window.plugin.guardians.isHighlightActive = false;
 
-window.plugin.guardians.onPortalDetailsUpdated = function() {
-	if(typeof(Storage) === "undefined") {
-		$('#portaldetails > .imgpreview').after(plugin.guardians.disabledMessage);
-		return;
-	}
+    window.plugin.guardians.onPortalDetailsUpdated = function() {
+        if(typeof(Storage) === "undefined") {
+            $('#portaldetails > .imgpreview').after(plugin.guardians.disabledMessage);
+            return;
+        }
+        var guid = window.selectedPortal,
+            details = portalDetail.get(guid),
+            nickname = window.PLAYER.nickname;
+            
+        if(details) {
+            plugin.guardians.updateCaptured(details.owner);
+        }
 
-	var guid = window.selectedPortal,
-		details = portalDetail.get(guid),
-		nickname = window.PLAYER.nickname;
-	if(details) {
-		plugin.guardians.updateCaptured(details.owner);
-	}
+        $('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
+        plugin.guardians.updateCheckedAndHighlight(guid);
+    }
 
-	$('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
-	plugin.guardians.updateCheckedAndHighlight(guid);
-}
+    window.plugin.guardians.onPublicChatDataAvailable = function(data) {
+	    var nick = window.PLAYER.nickname;
+        data.raw.success.forEach(function(msg) {
+        var plext = msg[2].plext,
+            markup = plext.markup;
 
-window.plugin.guardians.onPublicChatDataAvailable = function(data) {
-	var nick = window.PLAYER.nickname;
-	data.raw.success.forEach(function(msg) {
-		var plext = msg[2].plext,
-			markup = plext.markup;
-
-		if(plext.plextType == 'SYSTEM_BROADCAST' &&
-		markup.length==3 &&
-		markup[0][0] == 'PLAYER' &&
-		markup[0][1].plain == nick &&
-		markup[1][0] == 'TEXT' &&
-		markup[1][1].plain == ' captured ' &&
-		markup[2][0] == 'PORTAL') {
+        if(plext.plextType == 'SYSTEM_BROADCAST' &&
+        markup.length==3 &&
+        markup[0][0] == 'PLAYER' &&
+        markup[0][1].plain == nick &&
+        markup[1][0] == 'TEXT' &&
+        markup[1][1].plain == ' captured ' &&
+        markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
-			var portal = markup[2][1];
-			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-			    date = msg[1];
-			if(guid) {
-				console.log("running capture");
-				 plugin.guardians.setPortalCaptured(date, guid);
-			}
-		} else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
-		markup.length==4 &&
-		markup[0][0] == 'TEXT' &&
-		markup[0][1].plain == 'Your Portal ' &&
-		markup[1][0] == 'PORTAL' &&
-		markup[2][0] == 'TEXT' && 
-		markup[2][1].plain == ' neutralized by ' && 
-		markup[3][0] == 'PLAYER') {
+            var portal = markup[2][1];
+                guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+                date = msg[1];
+            if(guid) {
+                console.log("running capture");
+                plugin.guardians.setPortalCaptured(date, guid);
+            }
+        } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
+        markup.length==4 &&
+        markup[0][0] == 'TEXT' &&
+        markup[0][1].plain == 'Your Portal ' &&
+        markup[1][0] == 'PORTAL' &&
+        markup[2][0] == 'TEXT' && 
+        markup[2][1].plain == ' neutralized by ' && 
+        markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
 			var portal = markup[1][1];
 			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
@@ -325,42 +325,44 @@ window.plugin.guardians.highlighter = {
 }
 
 
-window.plugin.guardians.setupCSS = function() {
-	$("<style>")
-	.prop("type", "text/css")
-	.html("#guardians-container {\n  display: block;\n  text-align: center;\n  margin: 6px 3px 1px 3px;\n  padding: 0 4px;\n}\n#guardians-container label {\n  margin: 0 0.5em;\n}\n#guardians-container input {\n  vertical-align: middle;\n}\n\n.portal-list-guardians input[type=\'checkbox\'] {\n  padding: 0;\n  height: auto;\n  margin-top: -5px;\n  margin-bottom: -5px;\n}\n")
-	.appendTo("head");
-}
+    window.plugin.guardians.setupCSS = function() {
+	    $("<style>")
+	    .prop("type", "text/css")
+	    .html("#guardians-container {\n  display: block;\n  text-align: center;\n  margin: 6px 3px 1px 3px;\n  padding: 0 4px;\n}\n#guardians-container label {\n  margin: 0 0.5em;\n}\n#guardians-container input {\n  vertical-align: middle;\n}\n\n.portal-list-guardians input[type=\'checkbox\'] {\n  padding: 0;\n  height: auto;\n  margin-top: -5px;\n  margin-bottom: -5px;\n}\n")
+	    .appendTo("head");
+    }
 
-window.plugin.guardians.setupContent = function() {
-	plugin.guardians.contentHTML = '<div id="guardians-container">'
-		+ '<label><span id="capture-date">Empty</span></label>'
-		+ '</div>';
-	plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
-}
+    window.plugin.guardians.setupContent = function() {
+	    plugin.guardians.contentHTML = '<div id="guardians-container">'
+		    + '<label><span id="capture-date">Empty</span></label>'
+		    + '</div>';
+	    plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
+    }
 
-window.plugin.guardians.setupPortalsList = function() {
-	if(!window.plugin.portalslist) return;
+    window.plugin.guardians.setupPortalsList = function() {
+        if(!window.plugin.portalslist){
+            return;
+        } 
 
-	window.addHook('pluginGuardiansUpdateGuardians', function(data) {
-		var info = plugin.guardians.guardians[data.guid];
-		if(!info) info = { visited: false, captured: false };
+	    window.addHook('pluginGuardiansUpdateGuardians', function(data) {
+		    var info = plugin.guardians.guardians[data.guid];
+		    if(!info) info = { visited: false, captured: false };
 
-		$('[data-list-guardians="'+data.guid+'"].capture-date').html('is this it');
-	});
+		    $('[data-list-guardians="'+data.guid+'"].capture-date').html('is this it');
+	    });
 
-	window.addHook('pluginGuardiansRefreshAll', function() {
-		$('[data-list-guardians]').each(function(i, element) {
-			var guid = element.getAttribute("data-list-guardians");
+	    window.addHook('pluginGuardiansRefreshAll', function() {
+		    $('[data-list-guardians]').each(function(i, element) {
+			    var guid = element.getAttribute("data-list-guardians");
 
-			var info = plugin.guardians.guardians[guid];
-			if(!info) info = { date: 0 };
+			    var info = plugin.guardians.guardians[guid];
+			    if(!info) info = { date: 0 };
 
-			var e = $(element);
-			if(e.hasClass('capture-date')) e.innerHTML('maybe this');
-		});
-	});
-
+			    var e = $(element);
+			    if(e.hasClass('capture-date')) e.innerHTML('maybe this');
+		    });
+	    });
+    }
 	function guardianValue(guid) {
 		var info = plugin.guardians.guardians[guid];
 		if(!info) return 0;
@@ -396,44 +398,52 @@ window.plugin.guardians.setupPortalsList = function() {
 				}, false);
 		},
 	});
-}
 
-var setup = function() {
-	if($.inArray('pluginGuardiansUpdateGuardians', window.VALID_HOOKS) < 0)
-		window.VALID_HOOKS.push('pluginGuardiansUpdateGuardians');
-	if($.inArray('pluginGuardiansRefreshAll', window.VALID_HOOKS) < 0)
-		window.VALID_HOOKS.push('pluginGuardiansRefreshAll');
-	window.plugin.guardians.setupCSS();
-	window.plugin.guardians.setupContent();
-	window.plugin.guardians.loadLocal('guardians');
-	window.addHook('portalDetailsUpdated', window.plugin.guardians.onPortalDetailsUpdated);
-	window.addHook('publicChatDataAvailable', window.plugin.guardians.onPublicChatDataAvailable);
-	window.addHook('iitcLoaded', window.plugin.guardians.registerFieldForSyncing);
-		window.addPortalHighlighter('Guardians', window.plugin.guardians.highlighter);
+    var setup = function() {
+        if($.inArray('pluginGuardiansUpdateGuardians', window.VALID_HOOKS) < 0){
+            window.VALID_HOOKS.push('pluginGuardiansUpdateGuardians');
+        }
+        if($.inArray('pluginGuardiansRefreshAll', window.VALID_HOOKS) < 0){
+            window.VALID_HOOKS.push('pluginGuardiansRefreshAll');
+        }
+        window.plugin.guardians.setupCSS();
+        window.plugin.guardians.setupContent();
+        window.plugin.guardians.loadLocal('guardians');
+        window.addHook('portalDetailsUpdated', window.plugin.guardians.onPortalDetailsUpdated);
+        window.addHook('publicChatDataAvailable', window.plugin.guardians.onPublicChatDataAvailable);
+        window.addHook('iitcLoaded', window.plugin.guardians.registerFieldForSyncing);
+        window.addPortalHighlighter('Guardians', window.plugin.guardians.highlighter);
 
-	if(window.plugin.portalslist) {
-		window.plugin.guardians.setupPortalsList();
-	} else {
-		setTimeout(function() {
-			if(window.plugin.portalslist)
-				window.plugin.guardians.setupPortalsList();
-		}, 500);
-	}
-}
+        if(window.plugin.portalslist) {
+            window.plugin.guardians.setupPortalsList();
+        } else {
+            setTimeout(function() {
+                if(window.plugin.portalslist) {
+                    window.plugin.guardians.setupPortalsList();
+                }
+            }, 500);
+        }
+    }
 
 //PLUGIN END //////////////////////////////////////////////////////////
 
 
-setup.info = plugin_info; //add the script info data to the function as a property
-if(!window.bootPlugins) window.bootPlugins = [];
-window.bootPlugins.push(setup);
+    setup.info = plugin_info; //add the script info data to the function as a property
+    if(!window.bootPlugins) {
+        window.bootPlugins = [];
+    }
+    window.bootPlugins.push(setup);
 // if IITC has already booted, immediately run the 'setup' function
-if(window.iitcLoaded && typeof setup === 'function') setup();
+    if(window.iitcLoaded && typeof setup === 'function') {
+        setup();
+    }
 } // wrapper end
 // inject code into site context
 var script = document.createElement('script');
 var info = {};
-if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
+if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) {
+    info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
+}
 script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
 (document.body || document.head || document.documentElement).appendChild(script);
 
