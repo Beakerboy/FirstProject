@@ -33,7 +33,7 @@ function wrapper(plugin_info) {
     window.plugin.guardians = function() {};
 
 //delay in ms
-window.plugin.guardians.SYNC_DELAY = 5000;
+    window.plugin.guardians.SYNC_DELAY = 5000;
 
 // maps the JS property names to localStorage keys
     window.plugin.guardians.FIELDS = {
@@ -73,64 +73,58 @@ window.plugin.guardians.SYNC_DELAY = 5000;
     window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	    var nick = window.PLAYER.nickname;
         data.raw.success.forEach(function(msg) {
-        var plext = msg[2].plext,
-            markup = plext.markup;
+            var plext = msg[2].plext,
+                markup = plext.markup;
 
-        if(plext.plextType == 'SYSTEM_BROADCAST' &&
-        markup.length==3 &&
-        markup[0][0] == 'PLAYER' &&
-        markup[0][1].plain == nick &&
-        markup[1][0] == 'TEXT' &&
-        markup[1][1].plain == ' captured ' &&
-        markup[2][0] == 'PORTAL') {
+            if(plext.plextType == 'SYSTEM_BROADCAST' &&
+            markup.length==3 &&
+            markup[0][0] == 'PLAYER' &&
+            markup[0][1].plain == nick &&
+            markup[1][0] == 'TEXT' &&
+            markup[1][1].plain == ' captured ' &&
+            markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
-            var portal = markup[2][1];
-                guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-                date = msg[1];
-            if(guid) {
-                console.log("running capture");
-                plugin.guardians.setPortalCaptured(date, guid);
-            }
-        } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
-        markup.length==4 &&
-        markup[0][0] == 'TEXT' &&
-        markup[0][1].plain == 'Your Portal ' &&
-        markup[1][0] == 'PORTAL' &&
-        markup[2][0] == 'TEXT' && 
-        markup[2][1].plain == ' neutralized by ' && 
-        markup[3][0] == 'PLAYER') {
+                var portal = markup[2][1];
+                    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+                    date = msg[1];
+                if(guid) {
+                    console.log("running capture");
+                    plugin.guardians.setPortalCaptured(date, guid);
+                }
+            } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
+            markup.length==4 &&
+            markup[0][0] == 'TEXT' &&
+            markup[0][1].plain == 'Your Portal ' &&
+            markup[1][0] == 'PORTAL' &&
+            markup[2][0] == 'TEXT' && 
+            markup[2][1].plain == ' neutralized by ' && 
+            markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
-			var portal = markup[1][1];
-			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-			    date = msg[1];
-			if(guid) {
-				plugin.guardians.setPortalNeutralized(date, guid);
-			}
-		}
-	});
-}
+			    var portal = markup[1][1];
+			        guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+			        date = msg[1];
+			    if(guid) {
+				    plugin.guardians.setPortalNeutralized(date, guid);
+			    }
+		    }
+	    });
+    }
 
-window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
-	runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
-
-	if (guid == window.selectedPortal) {
-
-		var guardianInfo = plugin.guardians.guardians[guid],
-			visited = (guardianInfo && guardianInfo.visited) || false,
-			captured = (guardianInfo && guardianInfo.captured) || false;
-		if (guardianInfo) {
-		var date = new Date(guardianInfo.date);
-		$('#capture-date').html(date.toDateString());
-
-		}
-	}
-
-	if (window.plugin.guardians.isHighlightActive) {
-		if (portals[guid]) {
-			window.setMarkerStyle (portals[guid], guid == selectedPortal);
-		}
-	}
-}
+    window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
+	    runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
+	    if (guid == window.selectedPortal) {
+		    var guardianInfo = plugin.guardians.guardians[guid];
+		    if (guardianInfo) {
+		        var date = new Date(guardianInfo.date);
+		        $('#capture-date').html(date.toDateString());
+		    }
+	    }
+	    if (window.plugin.guardians.isHighlightActive) {
+		    if (portals[guid]) {
+			    window.setMarkerStyle (portals[guid], guid == selectedPortal);
+		    }
+	    }
+    }
 
 
 window.plugin.guardians.setPortalNeutralized = function(date, guid) {
@@ -195,12 +189,12 @@ window.plugin.guardians.updateCaptured = function(owner, guid) {
 }
 
 // stores the gived GUID for sync
-plugin.guardians.sync = function(guid) {
-	plugin.guardians.updatingQueue[guid] = true;
-	plugin.guardians.storeLocal('guardians');
-	plugin.guardians.storeLocal('updateQueue');
-	plugin.guardians.syncQueue();
-}
+    plugin.guardians.sync = function(guid) {
+	    plugin.guardians.updatingQueue[guid] = true;
+	    plugin.guardians.storeLocal('guardians');
+	    plugin.guardians.storeLocal('updateQueue');
+	    plugin.guardians.syncQueue();
+    }
 
 // sync the queue, but delay the actual sync to group a few updates in a single request
 window.plugin.guardians.syncQueue = function() {
@@ -221,10 +215,12 @@ window.plugin.guardians.syncQueue = function() {
 }
 
 //Call after IITC and all plugin loaded
-window.plugin.guardians.registerFieldForSyncing = function() {
-	if(!window.plugin.sync) return;
-	window.plugin.sync.registerMapForSync('guardians', 'guardians', window.plugin.guardians.syncCallback, window.plugin.guardians.syncInitialed);
-}
+    window.plugin.guardians.registerFieldForSyncing = function() {
+	    if(!window.plugin.sync){
+	        return;
+	    }
+	    window.plugin.sync.registerMapForSync('guardians', 'guardians', window.plugin.guardians.syncCallback, window.plugin.guardians.syncInitialed);
+    }
 
 //Call after local or remote change uploaded
 window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUpdated) {
@@ -262,36 +258,39 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 }
 
 //syncing of the field is initialed, upload all queued update
-window.plugin.guardians.syncInitialed = function(pluginName, fieldName) {
-	if(fieldName === 'guardians') {
-		plugin.guardians.enableSync = true;
-		if(Object.keys(plugin.guardians.updateQueue).length > 0) {
-			plugin.guardians.syncQueue();
-		}
-	}
-}
+    window.plugin.guardians.syncInitialed = function(pluginName, fieldName) {
+	    if(fieldName === 'guardians') {
+		    plugin.guardians.enableSync = true;
+		    if(Object.keys(plugin.guardians.updateQueue).length > 0) {
+			    plugin.guardians.syncQueue();
+		    }
+	    }
+    }
 
-window.plugin.guardians.storeLocal = function(name) {
-	var key = window.plugin.guardians.FIELDS[name];
-	if(key === undefined) return;
+    window.plugin.guardians.storeLocal = function(name) {
+	    var key = window.plugin.guardians.FIELDS[name];
+	    if(key === undefined){
+	        return;
+	    }
 
-	var value = plugin.guardians[name];
+	    var value = plugin.guardians[name];
 
-	if(typeof value !== 'undefined' && value !== null) {
-		localStorage[key] = JSON.stringify(plugin.guardians[name]);
-	} else {
-		localStorage.removeItem(key);
-	}
-}
+	    if(typeof value !== 'undefined' && value !== null) {
+		    localStorage[key] = JSON.stringify(plugin.guardians[name]);
+	    } else {
+		    localStorage.removeItem(key);
+	    }
+    }
 
-window.plugin.guardians.loadLocal = function(name) {
-	var key = window.plugin.guardians.FIELDS[name];
-	if(key === undefined) return;
-
-	if(localStorage[key] !== undefined) {
-		plugin.guardians[name] = JSON.parse(localStorage[key]);
-	}
-}
+    window.plugin.guardians.loadLocal = function(name) {
+	    var key = window.plugin.guardians.FIELDS[name];
+	    if(key === undefined){
+	        return;
+	    }
+	    if(localStorage[key] !== undefined) {
+		    plugin.guardians[name] = JSON.parse(localStorage[key]);
+	    }
+    }
 
 /***************************************************************************************************************************************************************/
 /** HIGHLIGHTER ************************************************************************************************************************************************/
