@@ -86,7 +86,7 @@ function wrapper(plugin_info) {
             markup[1][1].plain == ' captured ' &&
             markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
-                var portal = markup[2][1];
+                var portal = markup[2][1],
                     guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
                     date = msg[1];
                 if(guid) {
@@ -102,12 +102,12 @@ function wrapper(plugin_info) {
             markup[2][1].plain == ' neutralized by ' && 
             markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
-			    var portal = markup[1][1];
-			        guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-			        date = msg[1];
-			    if(guid) {
-				    plugin.guardians.setPortalNeutralized(date, guid);
-			    }
+                var portal = markup[1][1],
+                    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+                    date = msg[1];
+                if(guid) {
+                    plugin.guardians.setPortalNeutralized(date, guid);
+                }
 		    }
 	    });
     }
