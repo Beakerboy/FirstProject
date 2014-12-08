@@ -37,7 +37,7 @@ window.plugin.guardians.SYNC_DELAY = 5000;
 
 // maps the JS property names to localStorage keys
 window.plugin.guardians.FIELDS = {
-	'guardians': 'plugin-guardians-data',
+    'guardians': 'plugin-guardians-data',
 	'updateQueue': 'plugin-guardians-data-queue',
 	'updatingQueue': 'plugin-guardians-data-updating-queue',
 };
@@ -76,13 +76,13 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 		var plext = msg[2].plext,
 			markup = plext.markup;
 
-		if(plext.plextType == 'SYSTEM_BROADCAST'
-		&& markup.length==3
-		&& markup[0][0] == 'PLAYER'
-		&& markup[0][1].plain == nick
-		&& markup[1][0] == 'TEXT'
-		&& markup[1][1].plain == ' captured '
-		&& markup[2][0] == 'PORTAL') {
+		if(plext.plextType == 'SYSTEM_BROADCAST' &&
+		markup.length==3 &&
+		markup[0][0] == 'PLAYER' &&
+		markup[0][1].plain == nick &&
+		markup[1][0] == 'TEXT' &&
+		markup[1][1].plain == ' captured ' &&
+		markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
 			var portal = markup[2][1];
 			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
@@ -91,14 +91,14 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 				console.log("running capture");
 				 plugin.guardians.setPortalCaptured(date, guid);
 			}
-		} else if(plext.plextType == 'SYSTEM_NARROWCAST'
-		&& markup.length==4
-		&& markup[0][0] == 'TEXT'
-		&& markup[0][1].plain == 'Your Portal '
-		&& markup[1][0] == 'PORTAL'
-		&& markup[2][0] == 'TEXT'
-		&& (markup[2][1].plain == ' neutralized by ')
-		&& markup[3][0] == 'PLAYER') {
+		} else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
+		markup.length==4 &&
+		markup[0][0] == 'TEXT' &&
+		markup[0][1].plain == 'Your Portal ' &&
+		markup[1][0] == 'PORTAL' &&
+		markup[2][0] == 'TEXT' && 
+		markup[2][1].plain == ' neutralized by ' && 
+		markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
 			var portal = markup[1][1];
 			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
