@@ -334,9 +334,9 @@ window.plugin.guardians.highlighter = {
     };
 
     window.plugin.guardians.setupContent = function() {
-	    plugin.guardians.contentHTML = '<div id="guardians-container">'
-		    + '<label><span id="capture-date">Empty</span></label>'
-		    + '</div>';
+	    plugin.guardians.contentHTML = '<div id="guardians-container">' +
+	        '<label><span id="capture-date">Empty</span></label>' +
+	        '</div>';
 	    plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
     };
 
@@ -370,7 +370,7 @@ window.plugin.guardians.highlighter = {
 
 		if(info.visited && info.captured) return 2;
 		if(info.visited) return 1;
-	};
+	}
 
 	window.plugin.portalslist.fields.push({
 		title: "Visit",
