@@ -5,7 +5,7 @@
 // @version        0.1.1
 // @namespace      https://github.com/Beakerboy/FirstProject
 // @updateURL      
-// @downloadURL    
+// @downloadURL    https://github.com/Beakerboy/FirstProject/raw/master/guardians.user.js
 // @description    Track the portals you currently control. Highlight older portals red to hilight them as your guardians. Works with the sync plugin to syncronize data between devices.
 // @include        https://www.ingress.com/intel*
 // @include        http://www.ingress.com/intel*
