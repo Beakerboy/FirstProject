@@ -55,6 +55,12 @@ function wrapper(plugin_info) {
 
     window.plugin.guardians.isHighlightActive = false;
 
+    //can be all or self.
+    //TO DO: add a uniques option and an array of player names to track
+    window.plugin.guardian.track = 'self';
+    window.plugin.guardian.trackPlayer = "";
+
+
     window.plugin.guardians.onPortalDetailsUpdated = function () {
         if(Storage === undefined) {
             $('#portaldetails > .imgpreview').after(plugin.guardians.disabledMessage);
@@ -74,41 +80,40 @@ function wrapper(plugin_info) {
     window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	var nick = window.PLAYER.nickname;
 	data.raw.success.forEach(function(msg) {
-		var plext = msg[2].plext,
-			markup = plext.markup;
-
-		if(plext.plextType == 'SYSTEM_BROADCAST'
-		&& markup.length==3
-		&& markup[0][0] == 'PLAYER'
-		&& markup[0][1].plain == nick
-		&& markup[1][0] == 'TEXT'
-		&& markup[1][1].plain == ' captured '
-		&& markup[2][0] == 'PORTAL') {
+            var plext = msg[2].plext,
+                markup = plext.markup;
+            if(plext.plextType == 'SYSTEM_BROADCAST' &&
+            markup.length==3 &&
+            markup[0][0] == 'PLAYER' &&
+            markup[1][0] == 'TEXT' &&
+            markup[1][1].plain == ' captured ' &&
+            markup[2][0] == 'PORTAL') {
 		// search for "x captured y"
-			var portal = markup[2][1],
-			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-			    date = msg[1];
-			if(guid) {
-				console.log("running capture");
-				 plugin.guardians.setPortalCaptured(date, guid);
-			}
-		} else if(plext.plextType == 'SYSTEM_NARROWCAST'
-		&& markup.length==4
-		&& markup[0][0] == 'TEXT'
-		&& markup[0][1].plain == 'Your Portal '
-		&& markup[1][0] == 'PORTAL'
-		&& markup[2][0] == 'TEXT'
-		&& (markup[2][1].plain == ' neutralized by ')
-		&& markup[3][0] == 'PLAYER') {
+                var portal = markup[2][1],
+                    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+                    owner = markup[0][1].plain;
+                    date = msg[1];
+                if(guid) {
+                    console.log("running capture");
+                    plugin.guardians.setPortalCaptured(owner, date, guid);
+                }
+           } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
+           markup.length==4 &&
+           markup[0][0] == 'TEXT' &&
+           markup[0][1].plain == 'Your Portal ' &&
+           markup[1][0] == 'PORTAL' &&
+           markup[2][0] == 'TEXT' &&
+           markup[2][1].plain == ' neutralized by ' &&
+           markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
-			var portal = markup[1][1],
-			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-			    date = msg[1];
-			if(guid) {
-				plugin.guardians.setPortalNeutralized(date, guid);
-			}
-		}
-	});
+                var portal = markup[1][1],
+                    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
+                    date = msg[1];
+                if(guid) {
+                    plugin.guardians.setPortalNeutralized(date, guid);
+                }
+           }
+        });
     };
 
     window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
@@ -147,23 +152,26 @@ function wrapper(plugin_info) {
 	}
     };
 
-    window.plugin.guardians.setPortalCaptured = function(date, guid) {
+    window.plugin.guardians.setPortalCaptured = function(owner, date, guid) {
 	var madeChange = false,
-	    owner = window.PLAYER.nickname,
 	    guardianInfo = plugin.guardians.guardians[guid];
-	if (guardianInfo){
-		if (date > guardianInfo.date) {
-			guardianInfo.owner = window.PLAYER.nickname;
-			guardianInfo.date = date;
-			madeChange = true;
-		}
-	} else {
-		plugin.guardians.guardians[guid] = {
-			owner: owner,
-			date: date 
-		};
-		madeChange = true;
-	}
+	if (window.plugin.guardians.track == 'self' && owner == window.PALYER.nickname || window.plugin.guardians.track == 'all') {
+            if (guardianInfo){
+                if (date > guardianInfo.date) {
+                    guardianInfo.owner = owner;
+                    guardianInfo.date = date;
+                    guardianInfo.exact = true;
+                    madeChange = true;
+                }
+            } else {
+                plugin.guardians.guardians[guid] = {
+                    owner: owner,
+                    date: date,
+                    exact: true
+                };
+                madeChange = true;
+            }
+        }
 	if (madeChange){
 		console.log('Capturing ' + guid +'. Adding ' + owner + ' At time ' + date);
 		plugin.guardians.updateCheckedAndHighlight(guid);
@@ -176,17 +184,21 @@ function wrapper(plugin_info) {
 	if(guid == undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid];
-	if (!guardianInfo) {
+	if (window.plugin.guardians.track == 'self' && owner == window.PLYER.nickname || window.plugin.guardians.track == 'all') {
+            if (!guardianInfo) {
 		plugin.guardians.guardians[guid] = guardianInfo = {
-			date: 0,
-			owner: owner 
+                    date: 0,
+                    owner: owner,
+                    exact: false 
 		};
 		madeChange = true;
-	} else if (guardianInfo.owner != owner){
+            } else if (guardianInfo.owner != owner){
 		guardianInfo.owner = owner;
 		guardianInfo.date = guardianInfo.date + 1;
+                guardianInfo.exact = false;
 		madeChange = true;
-	}
+	    }
+        }
 	if (madeChange){
 		plugin.guardians.updateCheckedAndHighlight(guid);
 		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
