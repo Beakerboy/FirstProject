@@ -17,7 +17,9 @@
 
 function wrapper(plugin_info) {
 // ensure plugin framework is there, even if iitc is not yet loaded
-if(typeof window.plugin !== 'function') window.plugin = function() {};
+    if(typeof window.plugin !== 'function') {
+        window.plugin = function() {};
+    }
 
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
@@ -30,47 +32,47 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN START ////////////////////////////////////////////////////////
 
 //use own namespace for plugin
-window.plugin.guardians = function() {};
+    window.plugin.guardians = function () {};
 
 //delay in ms
-window.plugin.guardians.SYNC_DELAY = 5000;
+    window.plugin.guardians.SYNC_DELAY = 5000;
 
 // maps the JS property names to localStorage keys
-window.plugin.guardians.FIELDS = {
-	'guardians': 'plugin-guardians-data',
-	'updateQueue': 'plugin-guardians-data-queue',
-	'updatingQueue': 'plugin-guardians-data-updating-queue',
-};
+    window.plugin.guardians.FIELDS = {
+        'guardians': 'plugin-guardians-data',
+        'updateQueue': 'plugin-guardians-data-queue',
+        'updatingQueue': 'plugin-guardians-data-updating-queue'
+    };
 
-window.plugin.guardians.guardians = {};
-window.plugin.guardians.updateQueue = {};
-window.plugin.guardians.updatingQueue = {};
+    window.plugin.guardians.guardians = {};
+    window.plugin.guardians.updateQueue = {};
+    window.plugin.guardians.updatingQueue = {};
 
-window.plugin.guardians.enableSync = false;
+    window.plugin.guardians.enableSync = false;
 
-window.plugin.guardians.disabledMessage = null;
-window.plugin.guardians.contentHTML = null;
+    window.plugin.guardians.disabledMessage = null;
+    window.plugin.guardians.contentHTML = null;
 
-window.plugin.guardians.isHighlightActive = false;
+    window.plugin.guardians.isHighlightActive = false;
 
-window.plugin.guardians.onPortalDetailsUpdated = function() {
-	if(typeof(Storage) === "undefined") {
-		$('#portaldetails > .imgpreview').after(plugin.guardians.disabledMessage);
-		return;
-	}
+    window.plugin.guardians.onPortalDetailsUpdated = function () {
+        if(Storage === undefined) {
+            $('#portaldetails > .imgpreview').after(plugin.guardians.disabledMessage);
+            return;
+        }
 
-	var guid = window.selectedPortal,
-		details = portalDetail.get(guid),
-		nickname = window.PLAYER.nickname;
-	if(details) {
-		plugin.guardians.updateCaptured(details.owner);
-	}
+        var guid = window.selectedPortal,
+            details = portalDetail.get(guid),
+            nickname = window.PLAYER.nickname;
+        if(details) {
+            plugin.guardians.updateCaptured(details.owner);
+        }
 
-	$('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
-	plugin.guardians.updateCheckedAndHighlight(guid);
-}
+        $('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
+        plugin.guardians.updateCheckedAndHighlight(guid);
+    };
 
-window.plugin.guardians.onPublicChatDataAvailable = function(data) {
+    window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	var nick = window.PLAYER.nickname;
 	data.raw.success.forEach(function(msg) {
 		var plext = msg[2].plext,
@@ -108,9 +110,9 @@ window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 			}
 		}
 	});
-}
+    };
 
-window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
+    window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 	runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
 
 	if (guid == window.selectedPortal) {
@@ -130,11 +132,11 @@ window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 		if (portals[guid]) {
 			window.setMarkerStyle (portals[guid], guid == selectedPortal);
 		}
-	}
-}
+        }
+    };
 
 
-window.plugin.guardians.setPortalNeutralized = function(date, guid) {
+    window.plugin.guardians.setPortalNeutralized = function(date, guid) {
 	var madeChange = false,
 	    guardianInfo = plugin.guardians.guardians[guid];
 	if (guardianInfo && guardianInfo.owner == window.PLAYER.nickname && date > guardianInfo.date) {
@@ -146,9 +148,9 @@ window.plugin.guardians.setPortalNeutralized = function(date, guid) {
 		console.log('Neutralized ' + guid + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
-}
+    };
 
-window.plugin.guardians.setPortalCaptured = function(date, guid) {
+    window.plugin.guardians.setPortalCaptured = function(date, guid) {
 	var madeChange = false,
 	    owner = window.PLAYER.nickname,
 	    guardianInfo = plugin.guardians.guardians[guid];
@@ -170,9 +172,9 @@ window.plugin.guardians.setPortalCaptured = function(date, guid) {
 		plugin.guardians.updateCheckedAndHighlight(guid);
 		plugin.guardians.sync(guid);
 	}
-}
+    };
 
-window.plugin.guardians.updateCaptured = function(owner, guid) {
+    window.plugin.guardians.updateCaptured = function(owner, guid) {
 	var madeChange = false;
 	if(guid == undefined) guid = window.selectedPortal;
 
@@ -193,18 +195,18 @@ window.plugin.guardians.updateCaptured = function(owner, guid) {
 		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
-}
+    };
 
 // stores the gived GUID for sync
-plugin.guardians.sync = function(guid) {
+    plugin.guardians.sync = function(guid) {
 	plugin.guardians.updatingQueue[guid] = true;
 	plugin.guardians.storeLocal('guardians');
 	plugin.guardians.storeLocal('updateQueue');
 	plugin.guardians.syncQueue();
-}
+    };
 
 // sync the queue, but delay the actual sync to group a few updates in a single request
-window.plugin.guardians.syncQueue = function() {
+    window.plugin.guardians.syncQueue = function() {
 	if(!plugin.guardians.enableSync) return;
 	
 	clearTimeout(plugin.guardians.syncTimer);
@@ -219,16 +221,18 @@ window.plugin.guardians.syncQueue = function() {
 
 		plugin.sync.updateMap('guardians', 'guardians', Object.keys(plugin.guardians.updatingQueue));
 	}, plugin.guardians.SYNC_DELAY);
-}
+    };
 
 //Call after IITC and all plugin loaded
-window.plugin.guardians.registerFieldForSyncing = function() {
-	if(!window.plugin.sync) return;
+    window.plugin.guardians.registerFieldForSyncing = function() {
+	if(!window.plugin.sync) {
+            return;
+        }
 	window.plugin.sync.registerMapForSync('guardians', 'guardians', window.plugin.guardians.syncCallback, window.plugin.guardians.syncInitialed);
-}
+    };
 
 //Call after local or remote change uploaded
-window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUpdated) {
+    window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUpdated) {
 	if(fieldName === 'guardians') {
 		plugin.guardians.storeLocal('guardians');
 		// All data is replaced if other client update the data during this client
@@ -260,19 +264,19 @@ window.plugin.guardians.syncCallback = function(pluginName, fieldName, e, fullUp
 			window.runHooks('pluginGuardiansUpdateGuardians', {guid: e.property});
 		}
 	}
-}
+    };
 
 //syncing of the field is initialed, upload all queued update
-window.plugin.guardians.syncInitialed = function(pluginName, fieldName) {
+    window.plugin.guardians.syncInitialed = function(pluginName, fieldName) {
 	if(fieldName === 'guardians') {
 		plugin.guardians.enableSync = true;
 		if(Object.keys(plugin.guardians.updateQueue).length > 0) {
 			plugin.guardians.syncQueue();
 		}
 	}
-}
+    };
 
-window.plugin.guardians.storeLocal = function(name) {
+    window.plugin.guardians.storeLocal = function(name) {
 	var key = window.plugin.guardians.FIELDS[name];
 	if(key === undefined) return;
 
@@ -283,16 +287,16 @@ window.plugin.guardians.storeLocal = function(name) {
 	} else {
 		localStorage.removeItem(key);
 	}
-}
+    };
 
-window.plugin.guardians.loadLocal = function(name) {
+    window.plugin.guardians.loadLocal = function(name) {
 	var key = window.plugin.guardians.FIELDS[name];
 	if(key === undefined) return;
 
 	if(localStorage[key] !== undefined) {
 		plugin.guardians[name] = JSON.parse(localStorage[key]);
 	}
-}
+    };
 
 /***************************************************************************************************************************************************************/
 /** HIGHLIGHTER ************************************************************************************************************************************************/
