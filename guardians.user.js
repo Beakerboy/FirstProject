@@ -1,12 +1,12 @@
 // ==UserScript==
-// @id             iitc-plugin-guardians@3ch01c
+// @id             
 // @name           IITC plugin: Guardians
 // @category       Misc
-// @version        0.2.3.20141206.72845
-// @namespace      https://github.com/3ch01c/ingress-intel-total-conversion
-// @updateURL      https://secure.jonatkins.com/iitc/test/plugins/guardians.meta.js
-// @downloadURL    https://secure.jonatkins.com/iitc/test/plugins/guardians.user.js
-// @description    [jonatkins-test-2014-12-06-072845] Allow manual entry of portals visited/captured. Use the 'highlighter-guardians' plugin to show the guardians on the map, and 'sync' to share between multiple browsers or desktop/mobile. It will try and guess which portals you have captured from COMM/portal details, but this will not catch every case.
+// @version        0.1.1
+// @namespace      https://github.com/Beakerboy/FirstProject
+// @updateURL      
+// @downloadURL    
+// @description    Track the portals you currently control. Highlight older portals red to hilight them as your guardians. Works with the sync plugin to syncronize data between devices.
 // @include        https://www.ingress.com/intel*
 // @include        http://www.ingress.com/intel*
 // @match          https://www.ingress.com/intel*
