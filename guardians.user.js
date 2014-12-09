@@ -102,7 +102,7 @@ function wrapper(plugin_info) {
 		&& (markup[2][1].plain == ' neutralized by ')
 		&& markup[3][0] == 'PLAYER') {
 		// search for "Your Portal x neutralized by y"
-			var portal = markup[1][1];
+			var portal = markup[1][1],
 			    guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
 			    date = msg[1];
 			if(guid) {
