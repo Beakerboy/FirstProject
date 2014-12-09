@@ -119,8 +119,9 @@ window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
 			visited = (guardianInfo && guardianInfo.visited) || false,
 			captured = (guardianInfo && guardianInfo.captured) || false;
 		if (guardianInfo) {
-		var date = new Date(guardianInfo.date);
-		$('#capture-date').html(date.toDateString());
+                    var date = new Date(guardianInfo.date);
+                    $('#capture-date').html(date.toDateString());
+                    $('#capture-date').attr('title', guid);
 
 		}
 	}
@@ -409,28 +410,27 @@ window.plugin.guardians.showDialog = function() {
 
 //Count the number of visited and captured portals and produce the string which is displayed
 //in the dialog window
-window.plugin.guardians.getList = function() {
-  var allLogs = '';
-  var ccount = 0;
-  var vcount = 0;
-    for (var key in plugin.guardians.guardians){
-        var info = plugin.guardians.guardians[key];
-        if (info.captured) ccount=ccount+1;
-        if (info.visited) vcount=vcount+1;
+    window.plugin.guardians.getList = function() {
+        var allLogs = '',
+            ccount = 0;
+        for (var key in plugin.guardians.guardians){
+            var info = plugin.guardians.guardians[key];
+            if (info.owner == window.PLAYER.nickname) {
+                ccount=ccount+1;
+            }
+        }
+        allLogs += ' ' + 'Captured: ' + ccount + '<br />';
+        return allLogs;
     }
-    allLogs += ' ' + 'Captured: ' + ccount + '<br />Visited: ' + vcount + '<br />';
 
-  return allLogs;
-}
-
-window.plugin.guardians.setupDialog = function() {
+    window.plugin.guardians.setupDialog = function() {
 	//Create the HTML within the dialog window
-	plugin.guardians.dialogHTML = '<div id="guardians-dialog">'
-		+ '<div id="guardians-list"></div>'
-                + '</div>';
+        plugin.guardians.dialogHTML = '<div id="guardians-dialog">' +
+		'<div id="guardians-list"></div>' +
+                '</div>';
   //Add link in the IITC toolbax to display the Guardians dialog
-  $('#toolbox').append('<a id="guardians-show-dialog" onclick="window.plugin.guardians.showDialog();">Guardians</a> ');
-}
+        $('#toolbox').append('<a id="guardians-show-dialog" onclick="window.plugin.guardians.showDialog();">Guardians</a> ');
+    }
 
 var setup = function() {
 	if($.inArray('pluginGuardiansUpdateGuardians', window.VALID_HOOKS) < 0)
