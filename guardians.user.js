@@ -62,8 +62,7 @@ function wrapper(plugin_info) {
         }
 
         var guid = window.selectedPortal,
-            details = portalDetail.get(guid),
-            nickname = window.PLAYER.nickname;
+            details = portalDetail.get(guid);
         if(details) {
             plugin.guardians.updateCaptured(details.owner);
         }
@@ -117,9 +116,7 @@ function wrapper(plugin_info) {
 
 	if (guid == window.selectedPortal) {
 
-		var guardianInfo = plugin.guardians.guardians[guid],
-			visited = (guardianInfo && guardianInfo.visited) || false,
-			captured = (guardianInfo && guardianInfo.captured) || false;
+		var guardianInfo = plugin.guardians.guardians[guid];
 		if (guardianInfo) {
                     var date = new Date(guardianInfo.date);
                     $('#capture-date').html('Captured on :' + date.toDateString());
