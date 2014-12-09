@@ -122,7 +122,7 @@ function wrapper(plugin_info) {
 			captured = (guardianInfo && guardianInfo.captured) || false;
 		if (guardianInfo) {
                     var date = new Date(guardianInfo.date);
-                    $('#capture-date').html(date.toDateString());
+                    $('#capture-date').html('Captured on :' + date.toDateString());
                     $('#capture-date').attr('title', guid);
 
 		}
@@ -424,6 +424,21 @@ window.plugin.guardians.showDialog = function() {
             }
         }
         allLogs += ' ' + 'Captured: ' + ccount + '<br />';
+        allLogs += 'Logging: ' + Object.keys(plugin.guardians.guardians).length + '<br />';
+	allLogs += '<br />';
+	var temp = plugin.guardians.guardians;
+        var sortedGuardians = Object.keys(temp).sort( function(keyA, keyB) {
+            return temp[keyA].date - temp[keyB].date;
+        });
+        var print = 0;
+        for (i = 0; print < 11;i++){
+            var key = sortedGuardians[i],
+                info = temp[key];
+            if (info.owner == window.PLAYER.nickname) {
+                allLogs += 'Held for ' + Math.round((Date.now() - info.date)/86400000) + ' Days<br />';
+                print++;
+            }
+        }
         return allLogs;
     }
 
