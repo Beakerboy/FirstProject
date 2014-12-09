@@ -57,8 +57,11 @@ function wrapper(plugin_info) {
 
     //can be all or self.
     //TO DO: add a uniques option and an array of player names to track
-    window.plugin.guardian.track = 'self';
-    window.plugin.guardian.trackPlayer = "";
+    window.plugin.guardians.track = 'self';
+    window.plugin.guardians.trackPlayer = "";
+    //Can be 'date' or 'days'
+    window.plugin.guardians.display = 'date';
+
 
 
     window.plugin.guardians.onPortalDetailsUpdated = function () {
@@ -117,17 +120,20 @@ function wrapper(plugin_info) {
     };
 
     window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
-	runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
-
-	if (guid == window.selectedPortal) {
-
-		var guardianInfo = plugin.guardians.guardians[guid];
-		if (guardianInfo) {
-                    var date = new Date(guardianInfo.date);
-                    $('#capture-date').html('Captured on :' + date.toDateString());
-                    $('#capture-date').attr('title', guid);
-
-		}
+        runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
+        if (guid == window.selectedPortal) {
+            var guardianInfo = plugin.guardians.guardians[guid];
+            if (guardianInfo) {
+                var date = new Date(guardianInfo.date),
+                    displayText = '';
+                if (window.plugin.guardians.display == 'date') {
+                    displayText = 'Captured on ' + date.toDateString();
+                } else {
+                    displayText = 'Held for ' + Math.round((Date.now() - date)/86400000) + ' days'; 
+                }       
+                $('#capture-date').html(displayText);
+                $('#capture-date').attr('title', guid);
+            }
 	}
 
 	if (window.plugin.guardians.isHighlightActive) {
@@ -155,7 +161,7 @@ function wrapper(plugin_info) {
     window.plugin.guardians.setPortalCaptured = function(owner, date, guid) {
 	var madeChange = false,
 	    guardianInfo = plugin.guardians.guardians[guid];
-	if (window.plugin.guardians.track == 'self' && owner == window.PALYER.nickname || window.plugin.guardians.track == 'all') {
+	if (window.plugin.guardians.track == 'self' && owner == window.PLAYER.nickname || window.plugin.guardians.track == 'all') {
             if (guardianInfo){
                 if (date > guardianInfo.date) {
                     guardianInfo.owner = owner;
@@ -184,7 +190,7 @@ function wrapper(plugin_info) {
 	if(guid == undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid];
-	if (window.plugin.guardians.track == 'self' && owner == window.PLYER.nickname || window.plugin.guardians.track == 'all') {
+	if (window.plugin.guardians.track == 'self' && owner == window.PLAYER.nickname || window.plugin.guardians.track == 'all') {
             if (!guardianInfo) {
 		plugin.guardians.guardians[guid] = guardianInfo = {
                     date: 0,
