@@ -1,5 +1,5 @@
 // ==UserScript==
-// @id             
+// @id             iitc-plugin-guardians@3ch01c
 // @name           IITC plugin: Guardians
 // @category       Misc
 // @version        0.1.1
