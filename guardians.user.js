@@ -129,7 +129,7 @@ function wrapper(plugin_info) {
                 if (window.plugin.guardians.display == 'date') {
                     displayText = 'Captured on ' + date.toDateString();
                 } else {
-                    displayText = 'Held for ' + Math.round((Date.now() - date)/86400000) + ' days'; 
+                    displayText = 'Held for ' + Math.floor((Date.now() - date)/86400000) + ' days'; 
                 }       
                 $('#capture-date').html(displayText);
                 $('#capture-date').attr('title', guid);
@@ -189,8 +189,9 @@ function wrapper(plugin_info) {
 	var madeChange = false;
 	if(guid == undefined) guid = window.selectedPortal;
 
-	var guardianInfo = plugin.guardians.guardians[guid];
-	if (window.plugin.guardians.track == 'self' && owner == window.PLAYER.nickname || window.plugin.guardians.track == 'all') {
+	var guardianInfo = plugin.guardians.guardians[guid],
+            nick = window.PLAYER.nickname;
+	if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && (owner == nick || (guardianInfo && guardianInfo.owner == nick))) {
             if (!guardianInfo) {
 		plugin.guardians.guardians[guid] = guardianInfo = {
                     date: 0,
@@ -316,27 +317,32 @@ function wrapper(plugin_info) {
 /***************************************************************************************************************************************************************/
 /** HIGHLIGHTER ************************************************************************************************************************************************/
 /***************************************************************************************************************************************************************/
-window.plugin.guardians.highlighter = {
+    window.plugin.guardians.highlighter = {
 	highlight: function(data) {
-		var guid = data.portal.options.ent[0];
-		var guardianInfo = window.plugin.guardians.guardians[guid];
-
-		var style = {};
-
+            var guid = data.portal.options.ent[0],
+                guardianInfo = window.plugin.guardians.guardians[guid],
+		style = {};
 		if (guardianInfo) {
-			if (guardianInfo.owner == window.PLAYER.nickname) {
-				style.fillColor = 'black';
-				style.fillOpacity = 0.6;
-				// captured (and, implied, visited too) - no highlights
-			}
-			if (guardianInfo.owner == window.PLAYER.nickname && guardianInfo.date < Date.now() - 2592000000) {
-				style.fillColor = 'red';
-				style.fillOpacity = 0.6;
-				// captured (and, implied, visited too) - no highlights
-			}
-		}
-
-		data.portal.setStyle(style);
+                    if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && guardianInfo.owner == window.PLAYER.nickname) {
+                        var days = Math.floor((Date.now() - guardianInfo.date) / 86400000),
+                            color = Math.min(255, days * 2);
+                        style.fillColor = 'rgb(' + color + ', 0, 0)';
+                        style.fillOpacity = 0.6;
+                        var days = Math.floor((Date.now() - guardianInfo.date) / 86400000);
+                        if (days < 10) {
+                            data.portal.addTo(window.plugin.guardians.bronzeLayerGroup); 
+                        } else if (days < 20) {
+                            data.portal.addTo(window.plugin.guardians.silverLayerGroup); 
+                        } else if (days < 90) {
+                            data.portal.addTo(window.plugin.guardians.goldLayerGroup); 
+                        } else if (days < 150) {
+                            data.portal.addTo(window.plugin.guardians.platinumLayerGroup); 
+                        } else {
+                            data.portal.addTo(window.plugin.guardians.onyxLayerGroup); 
+                        }
+                    }
+                }
+                data.portal.setStyle(style);
 	},
 
 	setSelected: function(active) {
@@ -450,7 +456,7 @@ window.plugin.guardians.showDialog = function() {
             var key = sortedGuardians[i],
                 info = temp[key];
             if (info.owner == window.PLAYER.nickname) {
-                allLogs += 'Held for ' + Math.round((Date.now() - info.date)/86400000) + ' Days<br />';
+                allLogs += 'Held for ' + Math.floor((Date.now() - info.date)/86400000) + ' Days<br />';
                 print++;
             }
         }
@@ -466,6 +472,20 @@ window.plugin.guardians.showDialog = function() {
         $('#toolbox').append('<a id="guardians-show-dialog" onclick="window.plugin.guardians.showDialog();">Guardians</a> ');
     }
 
+    window.plugin.guardians.setupLayers = function () {
+        window.plugin.guardians.bronzeLayerGroup = new L.LayerGroup();
+        window.plugin.guardians.silverLayerGroup = new L.LayerGroup();
+        window.plugin.guardians.goldLayerGroup = new L.LayerGroup();
+        window.plugin.guardians.platinumLayerGroup = new L.LayerGroup();
+        window.plugin.guardians.onyxLayerGroup = new L.LayerGroup();
+
+        window.addLayerGroup('Bronze Guardians', window.plugin.guardians.bronzeLayerGroup, true);
+        window.addLayerGroup('Silver Guardians', window.plugin.guardians.silverLayerGroup, true);
+        window.addLayerGroup('Gold Guardians', window.plugin.guardians.goldLayerGroup, true);
+        window.addLayerGroup('Platinum Guardians', window.plugin.guardians.platinumLayerGroup, true);
+        window.addLayerGroup('Onyx Guardians', window.plugin.guardians.onyxLayerGroup, true);
+    };
+
 var setup = function() {
 	if($.inArray('pluginGuardiansUpdateGuardians', window.VALID_HOOKS) < 0)
 		window.VALID_HOOKS.push('pluginGuardiansUpdateGuardians');
@@ -474,6 +494,7 @@ var setup = function() {
 	window.plugin.guardians.setupCSS();
 	window.plugin.guardians.setupContent();
 	window.plugin.guardians.setupDialog();
+	window.plugin.guardians.setupLayers();
 	window.plugin.guardians.loadLocal('guardians');
 	window.addHook('portalDetailsUpdated', window.plugin.guardians.onPortalDetailsUpdated);
 	window.addHook('publicChatDataAvailable', window.plugin.guardians.onPublicChatDataAvailable);
