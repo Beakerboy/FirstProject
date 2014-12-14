@@ -234,7 +234,7 @@ function wrapper(plugin_info) {
                     owner: owner,
                     exact: false 
 		};
-            } else if (guardianInfo.owner != owner){
+            } else if (guardianInfo.owner != owner && guardianInfo.owner != ''){
 		guardianInfo.owner = owner;
                 if (guardianInfo.lastAccess === undefined) {
                     guardianInfo.date = guardianInfo.date + 1;
@@ -246,7 +246,9 @@ function wrapper(plugin_info) {
                 guardianInfo.team = team;
                 guardianInfo.exact = false;
                 guardianInfo.secondDate = date;
-	    }
+	    } else if (guardianInfo.owner == '') {
+                guardianInfo.owner = owner;
+            }
             if (guardianInfo.secondDate === undefined) {
                 guardianInfo.secondDate = date;
             }
@@ -397,9 +399,11 @@ function wrapper(plugin_info) {
                         guardianInfo.teamCheck = date;
                         madeChange = true;
                     } else if (guardianInfo.team != team) {
+                        guardianInfo.owner = '';
                         guardianInfo.team = team;
                         guardianInfo.date = Math.max(guardianInfo.date, guardianInfo.lastAccess, guardianInfo.teamCheck) + 1;
                         guardianInfo.teamCheck = date;
+                 
                         madeChange = true;
                     }
                 }
