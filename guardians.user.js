@@ -2,7 +2,7 @@
 // @id             iitc-plugin-guardians@Beakerboy
 // @name           IITC plugin: Guardians
 // @category       Misc
-// @version        0.1.1
+// @version        0.1.2
 // @namespace      https://github.com/Beakerboy/FirstProject
 // @updateURL      
 // @downloadURL    https://github.com/Beakerboy/FirstProject/raw/master/guardians.user.js
@@ -13,6 +13,14 @@
 // @match          http://www.ingress.com/intel*
 // @grant          none
 // ==/UserScript==
+
+//The guardian object has several parameters;
+//owner: who currently owns the portal
+//date: The earliest they could have captured the portal
+//secondDate: the latest date it could have been captured
+//lastAccess: the last time the ownership was verified
+//team: the faction the owner is a member of
+//teamCheck: the last time the team was verified
 
 
 function wrapper(plugin_info) {
@@ -73,7 +81,7 @@ function wrapper(plugin_info) {
         var guid = window.selectedPortal,
             details = portalDetail.get(guid);
         if(details) {
-            plugin.guardians.updateCaptured(details.owner);
+            plugin.guardians.updateCaptured(details.owner, details.team);
         }
 
         $('#portaldetails > .imgpreview').after(plugin.guardians.contentHTML);
@@ -94,11 +102,12 @@ function wrapper(plugin_info) {
 		// search for "x captured y"
                 var portal = markup[2][1],
                     guid = window.findPortalGuidByPositionE6(portal.latE6, portal.lngE6),
-                    owner = markup[0][1].plain;
+                    owner = markup[0][1].plain,
+                    team = markup[0][1].team,
                     date = msg[1];
                 if(guid) {
                     console.log("running capture");
-                    plugin.guardians.setPortalCaptured(owner, date, guid);
+                    plugin.guardians.setPortalCaptured(owner, team, date, guid);
                 }
            } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
            markup.length==4 &&
@@ -123,13 +132,22 @@ function wrapper(plugin_info) {
         runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
         if (guid == window.selectedPortal) {
             var guardianInfo = plugin.guardians.guardians[guid];
-            if (guardianInfo) {
+            if (guardianInfo && guardianInfo.team != 'NEUTRAL') {
+                console.log(JSON.stringify(guardianInfo));
+                if (guardianInfo.secondDate === undefined) {
+                    guardianInfo.secondDate = Date.now();
+                }
                 var date = new Date(guardianInfo.date),
+                    secondDate = new Date(guardianInfo.secondDate),
                     displayText = '';
                 if (window.plugin.guardians.display == 'date') {
                     displayText = 'Captured on ' + date.toDateString();
                 } else {
-                    displayText = 'Held for ' + Math.floor((Date.now() - date)/86400000) + ' days'; 
+                    if (!guardianInfo.exact) {
+                        displayText = 'Held between ' + Math.floor((Date.now() - date)/86400000) + ' and ' +Math.floor((Date.now() - secondDate)/86400000) + ' days';
+                    } else { 
+                        displayText = 'Held for ' + Math.floor((Date.now() - date)/86400000) + ' days'; 
+                    }
                 }       
                 $('#capture-date').html(displayText);
                 $('#capture-date').attr('title', guid);
@@ -149,7 +167,11 @@ function wrapper(plugin_info) {
 	    guardianInfo = plugin.guardians.guardians[guid];
 	if (guardianInfo && guardianInfo.owner == window.PLAYER.nickname && date > guardianInfo.date) {
 		guardianInfo.owner = '';
+                guardian.team = 'NEUTRAL';
 		guardianInfo.date = date;
+                guardianInfo.lastAccess = date;
+                guardianInfo.secondDate = date;
+                guardianInfo.exact = true;
 	}
 	if (madeChange){
 		plugin.guardians.updateCheckedAndHighlight(guid);
@@ -158,20 +180,28 @@ function wrapper(plugin_info) {
 	}
     };
 
-    window.plugin.guardians.setPortalCaptured = function(owner, date, guid) {
+    window.plugin.guardians.setPortalCaptured = function(owner, team, date, guid) {
 	var madeChange = false,
 	    guardianInfo = plugin.guardians.guardians[guid];
 	if (window.plugin.guardians.track == 'self' && owner == window.PLAYER.nickname || window.plugin.guardians.track == 'all') {
             if (guardianInfo){
                 if (date > guardianInfo.date) {
                     guardianInfo.owner = owner;
+                    guardianInfo.team = team;
+                    guardianInfo.teamCheck = date;
                     guardianInfo.date = date;
+                    guardianInfo.lastAccess = date;
+                    guardianInfo.secondDate = date;
                     guardianInfo.exact = true;
                     madeChange = true;
                 }
             } else {
                 plugin.guardians.guardians[guid] = {
                     owner: owner,
+                    team: team,
+                    teamCheck: date,
+                    secondDate: date,
+                    lastAccess: date,
                     date: date,
                     exact: true
                 };
@@ -185,30 +215,47 @@ function wrapper(plugin_info) {
 	}
     };
 
-    window.plugin.guardians.updateCaptured = function(owner, guid) {
-	var madeChange = false;
-	if(guid == undefined) guid = window.selectedPortal;
+    window.plugin.guardians.updateCaptured = function(owner, team, guid) {
+	if(guid === undefined) guid = window.selectedPortal;
 
 	var guardianInfo = plugin.guardians.guardians[guid],
-            nick = window.PLAYER.nickname;
+            nick = window.PLAYER.nickname,
+            date = Date.now();
+	    madeChange = false;
 	if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && (owner == nick || (guardianInfo && guardianInfo.owner == nick))) {
+            madeChange = true;
             if (!guardianInfo) {
 		plugin.guardians.guardians[guid] = guardianInfo = {
                     date: 0,
+                    team: team,
+                    teamCheck: date,
+                    lastViewed: date,
+                    secondDate: date,
                     owner: owner,
                     exact: false 
 		};
-		madeChange = true;
             } else if (guardianInfo.owner != owner){
 		guardianInfo.owner = owner;
-		guardianInfo.date = guardianInfo.date + 1;
+                if (guardianInfo.lastAccess === undefined) {
+                    guardianInfo.date = guardianInfo.date + 1;
+                } else if (guardianInfo.team != team){
+                    guardianInfo.date = guardianInfo.teamCheck + 1; 
+                } else {
+                    guardianInfo.date = guardianInfo.lastAccess + 1;
+                }
+                guardianInfo.team = team;
                 guardianInfo.exact = false;
-		madeChange = true;
+                guardianInfo.secondDate = date;
 	    }
+            if (guardianInfo.secondDate === undefined) {
+                guardianInfo.secondDate = date;
+            }
+            guardianInfo.lastAccess = date;
+            guardianInfo.teamCheck = date;
         }
 	if (madeChange){
 		plugin.guardians.updateCheckedAndHighlight(guid);
-		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+//		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
     };
@@ -320,12 +367,16 @@ function wrapper(plugin_info) {
     window.plugin.guardians.highlighter = {
 	highlight: function(data) {
             var guid = data.portal.options.ent[0],
+                team = data.portal.options.ent[2].team,
                 guardianInfo = window.plugin.guardians.guardians[guid],
+                madeChange = false,
+                date = Date.now(),
 		style = {};
-		if (guardianInfo) {
-                    if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && guardianInfo.owner == window.PLAYER.nickname) {
-                        var days = Math.floor((Date.now() - guardianInfo.date) / 86400000),
-                            color = Math.min(255, days * 2);
+            if (guardianInfo) {
+                if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && guardianInfo.owner == window.PLAYER.nickname) {
+                    var days = Math.floor((Date.now() - guardianInfo.date) / 86400000),
+                        color = Math.min(255, days * 2);
+                    if (guardianInfo.team !== undefined && guardianInfo.team != 'NEUTRAL') {
                         style.fillColor = 'rgb(' + color + ', 0, 0)';
                         style.fillOpacity = 0.6;
                         var days = Math.floor((Date.now() - guardianInfo.date) / 86400000);
@@ -341,14 +392,40 @@ function wrapper(plugin_info) {
                             data.portal.addTo(window.plugin.guardians.onyxLayerGroup); 
                         }
                     }
+                    if (guardianInfo.team === undefined) {
+                        guardianInfo.team = team;
+                        guardianInfo.teamCheck = date;
+                        madeChange = true;
+                    } else if (guardianInfo.team != team) {
+                        guardianInfo.team = team;
+                        guardianInfo.date = Math.max(guardianInfo.date, guardianInfo.lastAccess, guardianInfo.teamCheck) + 1;
+                        guardianInfo.teamCheck = date;
+                        madeChange = true;
+                    }
                 }
-                data.portal.setStyle(style);
+            } else if(window.plugin.guardians.track == 'all') {
+                plugin.guardians.guardians[guid] = {
+                    team: team,
+                    teamCheck: date,
+                    secondDate: date,
+                    owner: '',
+                    date: 0,
+                    lastAccess: date,
+                    exact:false 
+                };
+                madeChange = true;
+            }
+            if (madeChange) {
+		plugin.guardians.updateCheckedAndHighlight(guid);
+		plugin.guardians.sync(guid);
+            }
+            data.portal.setStyle(style);
 	},
 
-	setSelected: function(active) {
-		window.plugin.guardians.isHighlightActive = active;
-	}
-}
+        setSelected: function(active) {
+            window.plugin.guardians.isHighlightActive = active;
+        }
+    };
 
 
 window.plugin.guardians.setupCSS = function() {
@@ -360,7 +437,7 @@ window.plugin.guardians.setupCSS = function() {
 
 window.plugin.guardians.setupContent = function() {
 	plugin.guardians.contentHTML = '<div id="guardians-container">'
-		+ '<label><span id="capture-date">Empty</span></label>'
+		+ '<label><span id="capture-date"></span></label>'
 		+ '</div>';
 	plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
 }
@@ -439,6 +516,7 @@ window.plugin.guardians.showDialog = function() {
         var allLogs = '',
             ccount = 0;
         for (var key in plugin.guardians.guardians){
+//            console.log(JSON.stringify(plugin.guardians.guardians[key]));
             var info = plugin.guardians.guardians[key];
             if (info.owner == window.PLAYER.nickname) {
                 ccount=ccount+1;
