@@ -51,7 +51,7 @@ function wrapper(plugin_info) {
         'updateQueue': 'plugin-guardians-data-queue',
         'updatingQueue': 'plugin-guardians-data-updating-queue'
     };
-
+    window.plugin.guardians.errors = true;
     window.plugin.guardians.guardians = {};
     window.plugin.guardians.updateQueue = {};
     window.plugin.guardians.updatingQueue = {};
@@ -62,15 +62,6 @@ function wrapper(plugin_info) {
     window.plugin.guardians.contentHTML = null;
 
     window.plugin.guardians.isHighlightActive = false;
-
-    //can be all or self.
-    //TO DO: add a uniques option and an array of player names to track
-    window.plugin.guardians.track = 'self';
-    window.plugin.guardians.trackPlayer = "";
-    //Can be 'date' or 'days'
-    window.plugin.guardians.display = 'date';
-
-
 
     window.plugin.guardians.onPortalDetailsUpdated = function () {
         if(Storage === undefined) {
@@ -88,6 +79,10 @@ function wrapper(plugin_info) {
         plugin.guardians.updateCheckedAndHighlight(guid);
     };
 
+/******
+*  Parse the COMM data for portal captured messages
+*  When found, update the capture records
+*****/
     window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	var nick = window.PLAYER.nickname;
 	data.raw.success.forEach(function(msg) {
@@ -106,10 +101,10 @@ function wrapper(plugin_info) {
                     team = markup[0][1].team,
                     date = msg[1];
                 if(guid) {
-                    console.log("running capture");
+                    console.log("Found capture at " + markup[2][1].name + ' by ' + owner + ' on ' + date + ' in COMM');
                     plugin.guardians.setPortalCaptured(owner, team, date, guid);
                 }
-           } else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
+           }/* else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
            markup.length==4 &&
            markup[0][0] == 'TEXT' &&
            markup[0][1].plain == 'Your Portal ' &&
@@ -125,15 +120,23 @@ function wrapper(plugin_info) {
                     plugin.guardians.setPortalNeutralized(date, guid);
                 }
            }
-        });
+ */       });
     };
 
     window.plugin.guardians.updateCheckedAndHighlight = function(guid) {
-        runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
-        if (guid == window.selectedPortal) {
+        //runHooks('pluginGuardiansUpdateGuardians', { guid: guid });
+        if (window.plugin.guardians.errors) {
+            console.log('Is guid: ' + guid + ' equal to window.selectedPortal: ' + window.selectedPortal);
+        }
+        if (guid === window.selectedPortal) {
             var guardianInfo = plugin.guardians.guardians[guid];
+            if (window.plugin.guardians.errors) {
+                console.log('Does guardianInfo: ' + guardianInfo + ' exist' );
+            }  
             if (guardianInfo && guardianInfo.team != 'NEUTRAL') {
-                console.log(JSON.stringify(guardianInfo));
+                if (window.plugin.guardians.errors) {
+                    console.log('updating faction: ' + JSON.stringify(guardianInfo));
+                }
                 if (guardianInfo.secondDate === undefined) {
                     guardianInfo.secondDate = Date.now();
                 }
@@ -153,11 +156,22 @@ function wrapper(plugin_info) {
                 $('#capture-date').attr('title', guid);
             }
 	}
-
+        if (window.plugin.guardians.errors) {
+            console.log('isHighlightActive: ' + window.plugin.guardians.isHighlightActive);
+        }
 	if (window.plugin.guardians.isHighlightActive) {
-		if (portals[guid]) {
-			window.setMarkerStyle (portals[guid], guid == selectedPortal);
-		}
+            if (window.plugin.guardians.errors) {
+                console.log('portals[guid]: ' + portals[guid]);
+            }
+            if (portals[guid]) {
+                if (window.plugin.guardians.errors) {
+                    console.log('Setting Marker Style');
+                }
+                window.setMarkerStyle (portals[guid], guid == selectedPortal);
+                if (window.plugin.guardians.errors) {
+                    console.log('Done Setting Marker Style');
+                }
+            }
         }
     };
 
@@ -180,11 +194,16 @@ function wrapper(plugin_info) {
 	}
     };
 
+/******
+*  Given a guid, owner, team, and date, update the record if appropriate
+*****/
     window.plugin.guardians.setPortalCaptured = function(owner, team, date, guid) {
 	var madeChange = false,
 	    guardianInfo = plugin.guardians.guardians[guid];
 	if (window.plugin.guardians.track == 'self' && owner == window.PLAYER.nickname || window.plugin.guardians.track == 'all') {
+            //If we already have an entry for this portal, update values
             if (guardianInfo){
+                //Only update the info if this capture date is more recent then the one that is currently saved
                 if (date > guardianInfo.date) {
                     guardianInfo.owner = owner;
                     guardianInfo.team = team;
@@ -195,6 +214,7 @@ function wrapper(plugin_info) {
                     guardianInfo.exact = true;
                     madeChange = true;
                 }
+            //Otherwise, create a new one
             } else {
                 plugin.guardians.guardians[guid] = {
                     owner: owner,
@@ -257,7 +277,7 @@ function wrapper(plugin_info) {
         }
 	if (madeChange){
 		plugin.guardians.updateCheckedAndHighlight(guid);
-//		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
+		console.log('Updating ' + guid +". Adding " + owner + ' At time ' + guardianInfo.date);
 		plugin.guardians.sync(guid);
 	}
     };
@@ -378,9 +398,31 @@ function wrapper(plugin_info) {
                 if (window.plugin.guardians.track == 'all' || window.plugin.guardians.track == 'self' && guardianInfo.owner == window.PLAYER.nickname) {
                     var days = Math.floor((Date.now() - guardianInfo.date) / 86400000),
                         color = Math.min(255, days * 2);
-                    if (guardianInfo.team !== undefined && guardianInfo.team != 'NEUTRAL') {
+                    
+                    if (guardianInfo.team === undefined) {
+                        guardianInfo.team = team;
+                        guardianInfo.teamCheck = date;
+                        madeChange = true;
+                    } else if (guardianInfo.team != team) {
+                        //if portal ownership has changed singe it was last looked at
+                        //clear the owner, reset the team, and set the earliest capture time to the latest time owner or 
+                        //allignment was verified plus one.  Should I really set the sencondDate or wait until the owner is verified? 
+                        guardianInfo.owner = '';
+                        guardianInfo.team = team;
+                        guardianInfo.date = Math.max(guardianInfo.date, guardianInfo.lastAccess, guardianInfo.teamCheck) + 1;
+                        guardianInfo.exact = false;
+                        guardianInfo.teamCheck = date;
+                        guardianInfo.secondDate = date;
+                 
+                        madeChange = true;
+                    }
+                    if (guardianInfo.team != 'NEUTRAL') {
                         style.fillColor = 'rgb(' + color + ', 0, 0)';
                         style.fillOpacity = 0.6;
+                        if (guardianInfo.owner == '') {
+                            style.fillColor = 'purple';
+                        style.fillOpacity = 0.0;
+                        }
                         var days = Math.floor((Date.now() - guardianInfo.date) / 86400000);
                         if (days < 10) {
                             data.portal.addTo(window.plugin.guardians.bronzeLayerGroup); 
@@ -393,18 +435,6 @@ function wrapper(plugin_info) {
                         } else {
                             data.portal.addTo(window.plugin.guardians.onyxLayerGroup); 
                         }
-                    }
-                    if (guardianInfo.team === undefined) {
-                        guardianInfo.team = team;
-                        guardianInfo.teamCheck = date;
-                        madeChange = true;
-                    } else if (guardianInfo.team != team) {
-                        guardianInfo.owner = '';
-                        guardianInfo.team = team;
-                        guardianInfo.date = Math.max(guardianInfo.date, guardianInfo.lastAccess, guardianInfo.teamCheck) + 1;
-                        guardianInfo.teamCheck = date;
-                 
-                        madeChange = true;
                     }
                 }
             } else if(window.plugin.guardians.track == 'all') {
@@ -420,7 +450,7 @@ function wrapper(plugin_info) {
                 madeChange = true;
             }
             if (madeChange) {
-		plugin.guardians.updateCheckedAndHighlight(guid);
+//		plugin.guardians.updateCheckedAndHighlight(guid);
 		plugin.guardians.sync(guid);
             }
             data.portal.setStyle(style);
@@ -432,21 +462,21 @@ function wrapper(plugin_info) {
     };
 
 
-window.plugin.guardians.setupCSS = function() {
+    window.plugin.guardians.setupCSS = function() {
 	$("<style>")
 	.prop("type", "text/css")
 	.html("#guardians-container {\n  display: block;\n  text-align: center;\n  margin: 6px 3px 1px 3px;\n  padding: 0 4px;\n}\n#guardians-container label {\n  margin: 0 0.5em;\n}\n#guardians-container input {\n  vertical-align: middle;\n}\n\n.portal-list-guardians input[type=\'checkbox\'] {\n  padding: 0;\n  height: auto;\n  margin-top: -5px;\n  margin-bottom: -5px;\n}\n")
 	.appendTo("head");
-}
+    };
 
-window.plugin.guardians.setupContent = function() {
-	plugin.guardians.contentHTML = '<div id="guardians-container">'
-		+ '<label><span id="capture-date"></span></label>'
-		+ '</div>';
-	plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
-}
+    window.plugin.guardians.setupContent = function() {
+        plugin.guardians.contentHTML = '<div id="guardians-container">' +
+            '<label><span id="capture-date"></span></label>' +
+            '</div>';
+        plugin.guardians.disabledMessage = '<div id="guardians-container" class="help" title="Your browser does not support localStorage">Plugin Guardians disabled</div>';
+    };
 
-window.plugin.guardians.setupPortalsList = function() {
+    window.plugin.guardians.setupPortalsList = function() {
 	if(!window.plugin.portalslist) return;
 
 	window.addHook('pluginGuardiansUpdateGuardians', function(data) {
@@ -503,16 +533,16 @@ window.plugin.guardians.setupPortalsList = function() {
 				}, false);
 		},
 	});
-}
+    };
 
-window.plugin.guardians.updateList = function(messages) {
-  $('#guardians-list').html(messages);
-}
+    window.plugin.guardians.updateList = function(messages) {
+        $('#guardians-list').html(messages);
+    };
 
-window.plugin.guardians.showDialog = function() {
-  window.dialog({html: plugin.guardians.dialogHTML, title: 'Guardians', modal: true, id: 'guardians-setting'});
-  plugin.guardians.updateList(plugin.guardians.getList());
-}
+    window.plugin.guardians.showDialog = function() {
+        window.dialog({html: plugin.guardians.dialogHTML, title: 'Guardians', modal: true, id: 'guardians-setting'});
+        plugin.guardians.updateList(plugin.guardians.getList());
+    };
 
 //Count the number of visited and captured portals and produce the string which is displayed
 //in the dialog window
@@ -520,9 +550,9 @@ window.plugin.guardians.showDialog = function() {
         var allLogs = '',
             ccount = 0;
         for (var key in plugin.guardians.guardians){
-//            console.log(JSON.stringify(plugin.guardians.guardians[key]));
+            //console.log(JSON.stringify(plugin.guardians.guardians[key]));
             var info = plugin.guardians.guardians[key];
-            if (info.owner == window.PLAYER.nickname) {
+            if (info.owner === window.PLAYER.nickname) {
                 ccount=ccount+1;
             }
         }
@@ -537,13 +567,14 @@ window.plugin.guardians.showDialog = function() {
         for (i = 0; print < 11;i++){
             var key = sortedGuardians[i],
                 info = temp[key];
-            if (info.owner == window.PLAYER.nickname) {
+            console.log(key + ': ' +  JSON.stringify(info));
+            if (info.owner === window.PLAYER.nickname) {
                 allLogs += 'Held for ' + Math.floor((Date.now() - info.date)/86400000) + ' Days<br />';
                 print++;
             }
         }
         return allLogs;
-    }
+    };
 
     window.plugin.guardians.setupDialog = function() {
 	//Create the HTML within the dialog window
@@ -552,7 +583,7 @@ window.plugin.guardians.showDialog = function() {
                 '</div>';
   //Add link in the IITC toolbax to display the Guardians dialog
         $('#toolbox').append('<a id="guardians-show-dialog" onclick="window.plugin.guardians.showDialog();">Guardians</a> ');
-    }
+    };
 
     window.plugin.guardians.setupLayers = function () {
         window.plugin.guardians.bronzeLayerGroup = new L.LayerGroup();
@@ -566,6 +597,21 @@ window.plugin.guardians.showDialog = function() {
         window.addLayerGroup('Gold Guardians', window.plugin.guardians.goldLayerGroup, true);
         window.addLayerGroup('Platinum Guardians', window.plugin.guardians.platinumLayerGroup, true);
         window.addLayerGroup('Onyx Guardians', window.plugin.guardians.onyxLayerGroup, true);
+    };
+
+    window.plugin.guardians.loadOptions = function () {
+        var guardianInfo = plugin.guardians.guardians['options'];
+        if (guardianInfo === undefined) {
+            //can be all or self.
+            //TO DO: add a uniques option and an array of player names to track
+            window.plugin.guardians.track = 'all';
+            window.plugin.guardians.trackPlayer = "";
+            //Can be 'date' or 'days'
+            window.plugin.guardians.display = 'days';
+        } else {
+            window.plugin.guardians.track = guardianInfo.track;
+            window.plugin.guardians.display = guardianInfo.display;
+        }
     };
 
 var setup = function() {
@@ -591,7 +637,8 @@ var setup = function() {
 				window.plugin.guardians.setupPortalsList();
 		}, 500);
 	}
-}
+        window.plugin.guardians.loadOptions();
+};
 
 //PLUGIN END //////////////////////////////////////////////////////////
 
