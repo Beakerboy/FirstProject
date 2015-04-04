@@ -2,7 +2,7 @@
 // @id             iitc-plugin-guardians@Beakerboy
 // @name           IITC plugin: Guardians
 // @category       Misc
-// @version        0.1.2
+// @version        0.1.3
 // @namespace      https://github.com/Beakerboy/FirstProject
 // @updateURL      
 // @downloadURL    https://github.com/Beakerboy/FirstProject/raw/master/guardians.user.js
@@ -85,7 +85,7 @@ function wrapper(plugin_info) {
 *****/
     window.plugin.guardians.onPublicChatDataAvailable = function(data) {
 	var nick = window.PLAYER.nickname;
-	data.raw.success.forEach(function(msg) {
+	data.result.forEach(function(msg) {
             var plext = msg[2].plext,
                 markup = plext.markup;
             if(plext.plextType == 'SYSTEM_BROADCAST' &&
@@ -101,8 +101,13 @@ function wrapper(plugin_info) {
                     team = markup[0][1].team,
                     date = msg[1];
                 if(guid) {
-                    console.log("Found capture at " + markup[2][1].name + ' by ' + owner + ' on ' + date + ' in COMM');
+                    if (window.plugin.guardians.errors) {
+                        console.log("Found capture at " + markup[2][1].name + ' by ' + owner + ' on ' + date + ' in COMM');
+                    }
                     plugin.guardians.setPortalCaptured(owner, team, date, guid);
+                    if (window.plugin.guardians.errors) {
+                        console.log('Done Running Capture');
+                    }
                 }
            }/* else if(plext.plextType == 'SYSTEM_NARROWCAST' &&
            markup.length==4 &&
@@ -204,7 +209,13 @@ function wrapper(plugin_info) {
             //If we already have an entry for this portal, update values
             if (guardianInfo){
                 //Only update the info if this capture date is more recent then the one that is currently saved
+                    if (window.plugin.guardians.errors) {
+                        console.log('Is date:' + date + ' > guardianInfo.date:' + guardianInfo.date);
+                    }
                 if (date > guardianInfo.date) {
+                    if (window.plugin.guardians.errors) {
+                        console.log('Current capture is more recent');
+                    }
                     guardianInfo.owner = owner;
                     guardianInfo.team = team;
                     guardianInfo.teamCheck = date;
@@ -388,6 +399,9 @@ function wrapper(plugin_info) {
 /***************************************************************************************************************************************************************/
     window.plugin.guardians.highlighter = {
 	highlight: function(data) {
+            if (window.plugin.guardians.errors) {
+                console.log('In Highlighter');
+            }
             var guid = data.portal.options.ent[0],
                 team = data.portal.options.ent[2].team,
                 guardianInfo = window.plugin.guardians.guardians[guid],
@@ -421,7 +435,7 @@ function wrapper(plugin_info) {
                         style.fillOpacity = 0.6;
                         if (guardianInfo.owner == '') {
                             style.fillColor = 'purple';
-                        style.fillOpacity = 0.0;
+                            style.fillOpacity = 0.0;
                         }
                         var days = Math.floor((Date.now() - guardianInfo.date) / 86400000);
                         if (days < 10) {
@@ -438,6 +452,8 @@ function wrapper(plugin_info) {
                     }
                 }
             } else if(window.plugin.guardians.track == 'all') {
+                //No existing data for this portal, so create what we can. Since we only no the owner of a selected portal
+                //this is only perfomed when tracking all.
                 plugin.guardians.guardians[guid] = {
                     team: team,
                     teamCheck: date,
@@ -450,7 +466,6 @@ function wrapper(plugin_info) {
                 madeChange = true;
             }
             if (madeChange) {
-//		plugin.guardians.updateCheckedAndHighlight(guid);
 		plugin.guardians.sync(guid);
             }
             data.portal.setStyle(style);
